@@ -72,9 +72,6 @@ kotlin {
 
         implementation(libs.kotlinx.html)
 
-        implementation(libs.kotlinx.nodejs)
-        implementation(libs.kotlinx.html)
-
         implementation(kvision())
         implementation(kvision("bootstrap"))
         implementation(kvision("bootstrap-css"))
