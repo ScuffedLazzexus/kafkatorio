@@ -18,6 +18,11 @@ kafka-streams-config:
   bootstrap.servers: ${KAFKA_BOOTSTRAP_SERVERS:-localhost:9092}
   state.dir: ${KAFKA_STREAMS_STATE_DIR:-.state/kafka}
   num.stream.threads: ${KAFKA_STREAMS_NUM_THREADS:-1}
+  # With exactly_once_v2 the default commit interval is 100ms, so almost every intermediate
+  # aggregate update is forwarded downstream. A longer interval and a larger record cache let
+  # repeated updates to the same (large) map chunk be merged before being forwarded.
+  commit.interval.ms: ${KAFKA_STREAMS_COMMIT_INTERVAL_MS:-100}
+  cache.max.bytes.buffering: ${KAFKA_STREAMS_CACHE_MAX_BYTES:-10485760}
   processing.guarantee: exactly_once_v2
   auto.offset.reset: earliest
   default.key.serde: org.apache.kafka.common.serialization.Serdes$StringSerde

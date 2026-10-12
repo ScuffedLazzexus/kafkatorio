@@ -26,6 +26,9 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
       # one stream thread per partition (topics have 3) - parallelises map processing
       KAFKA_STREAMS_NUM_THREADS: "3"
+      # merge repeated map-chunk updates for 10s before forwarding them (128MB cache per topology)
+      KAFKA_STREAMS_COMMIT_INTERVAL_MS: "10000"
+      KAFKA_STREAMS_CACHE_MAX_BYTES: "134217728"
       JAVA_OPTS: "-Xmx4g"
     networks: [ kafkatorio-nw ]
     depends_on: [ infra-kafka ]
