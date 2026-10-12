@@ -128,7 +128,7 @@ class KafkatorioPacketKafkaProducer(
 
     syslog.copyHeadersTo(record)
 
-    producer.send(record)
+    producer.send(record) { _, ex -> if (ex != null) log("failed to send packet: ${ex::class.qualifiedName} ${ex.message}") }
   }
 
 
@@ -143,7 +143,7 @@ class KafkatorioPacketKafkaProducer(
 
     syslog.copyHeadersTo(record)
 
-    dlqProducer.send(record)
+    dlqProducer.send(record) { _, ex -> if (ex != null) log("failed to send DLQ message: ${ex::class.qualifiedName} ${ex.message}") }
   }
 
 

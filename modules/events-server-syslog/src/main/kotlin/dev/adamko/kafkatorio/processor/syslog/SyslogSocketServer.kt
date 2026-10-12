@@ -87,7 +87,9 @@ class SyslogSocketServer(
 
         try {
           val messageContents = syslogParser.parseLine(line)
-          val syslog = SyslogMsg(messageContents)
+          // copy the result: the parser reuses its map for the next line, so without a copy a
+          // message could be overwritten before it was produced, and was then silently dropped
+          val syslog = SyslogMsg(messageContents.toMap())
           _messages.emit(syslog)
         } catch (ex: ParseException) {
           log("ignoring non-syslog message: $line")
