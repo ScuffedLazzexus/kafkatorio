@@ -40,7 +40,7 @@ class MapChunkUpdateHandler {
       return
     }
 
-    const tiles: TileRead[] = Converters.convertPlacedTiles(event.tile, event.tiles)
+    const tiles: Tile[] = Converters.convertPlacedTiles(event.tile, event.tiles)
     const groupedTiles = MapChunkUpdateHandler.groupTiles(tiles)
 
     for (const [chunkPos, tiles] of groupedTiles) {
@@ -79,7 +79,7 @@ class MapChunkUpdateHandler {
       return
     }
 
-    const tiles: TileRead[] = Converters.convertRemovedTiles(surface, event.tiles)
+    const tiles: Tile[] = Converters.convertRemovedTiles(surface, event.tiles)
     const groupedTiles = MapChunkUpdateHandler.groupTiles(tiles)
 
     for (const [chunkPos, tiles] of groupedTiles) {
@@ -152,7 +152,7 @@ class MapChunkUpdateHandler {
   private static mapTilesUpdateDebounce(
       surface: LuaSurface | undefined,
       chunkPosition: MapChunkPosition,
-      tiles: TileRead[],
+      tiles: Tile[],
       event: MapChunkUpdateEvent | MapTileChangeEvent,
       updater?: MapChunkTileUpdater,
       expirationDurationTicks?: uint,
@@ -215,9 +215,9 @@ class MapChunkUpdateHandler {
   }
 
 
-  private static groupTiles(tiles: TileRead[]): Map<MapChunkPosition, TileRead[]> {
+  private static groupTiles(tiles: Tile[]): Map<MapChunkPosition, Tile[]> {
 
-    const mapChunkPositionToTiles = new Map<MapChunkPosition, TileRead[]>()
+    const mapChunkPositionToTiles = new Map<MapChunkPosition, Tile[]>()
     for (const tile of tiles) {
       const chunkPosition = Converters.tilePositionToChunkPosition(tile.position)
       if (!mapChunkPositionToTiles.has(chunkPosition)) {

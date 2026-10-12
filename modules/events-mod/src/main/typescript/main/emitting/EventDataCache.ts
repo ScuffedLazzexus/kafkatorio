@@ -3,7 +3,7 @@ import {KafkatorioKeyedPacketData} from "../types";
 import PacketEmitter from "./PacketEmitter";
 
 
-declare const global: {
+declare const storage: {
   /** Map the hash of the key, as a string, a cache entry */
   eventUpdatesManagerCache: LuaTable<string, CacheEntry<KafkatorioKeyedPacketData>>,
 }
@@ -18,13 +18,13 @@ export class EventUpdatesManager {
 
   init(force?: boolean) {
 
-    const isAnythingUndefined = global.eventUpdatesManagerCache == undefined
+    const isAnythingUndefined = storage.eventUpdatesManagerCache == undefined
 
     log(`Initialising EventDataCache (force=${force}, isAnythingUndefined=${isAnythingUndefined})...`)
 
     if (force == true || isAnythingUndefined) {
-      log("Initialising global.cache")
-      global.eventUpdatesManagerCache = new LuaTable<string, CacheEntry<KafkatorioKeyedPacketData>>()
+      log("Initialising storage.cache")
+      storage.eventUpdatesManagerCache = new LuaTable<string, CacheEntry<KafkatorioKeyedPacketData>>()
     }
     log(`Finished initialising EventDataCache`)
   }
@@ -103,12 +103,12 @@ export class EventUpdatesManager {
     let countExpired = 0
     let countTotal = 0
     const expiredData: Array<KafkatorioKeyedPacketData> = []
-    for (const [key, entry] of global.eventUpdatesManagerCache) {
+    for (const [key, entry] of storage.eventUpdatesManagerCache) {
       countTotal++
       if (this.isExpired(entry)) {
         countExpired++
         expiredData.push(entry.packet)
-        global.eventUpdatesManagerCache.delete(key)
+        storage.eventUpdatesManagerCache.delete(key)
       }
     }
 
@@ -146,10 +146,10 @@ export class EventUpdatesManager {
       type: PacketType<PACKET>,
   ): CacheEntry<PACKET> | undefined {
     const hash = EventUpdatesManager.hashKey(key)
-    if (!global.eventUpdatesManagerCache.has(hash)) {
+    if (!storage.eventUpdatesManagerCache.has(hash)) {
       return undefined
     }
-    const value: CacheEntry<any> = global.eventUpdatesManagerCache.get(hash)
+    const value: CacheEntry<any> = storage.eventUpdatesManagerCache.get(hash)
     if (this.isEntryInstanceOf(value, type)) {
       return value
     } else {
@@ -169,7 +169,7 @@ export class EventUpdatesManager {
     }
     const entry: CacheEntry<PACKET> = new CacheEntry<PACKET>(data)
     const hash = EventUpdatesManager.hashKey(key)
-    global.eventUpdatesManagerCache.set(hash, entry)
+    storage.eventUpdatesManagerCache.set(hash, entry)
     return entry
   }
 
@@ -206,7 +206,7 @@ export class EventUpdatesManager {
   private static hashKey<PACKET extends KafkatorioKeyedPacketData>(
       key: PacketKey<PACKET>,
   ): string {
-    return game.encode_string(game.table_to_json(key))!!
+    return helpers.encode_string(helpers.table_to_json(key))!!
   }
 
 }

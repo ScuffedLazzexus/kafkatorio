@@ -33,7 +33,7 @@ function emit<T extends FactorioPrototype>(protosByType: PrototypesByType<T>) {
 function getMapTilePrototypes(): PrototypesByType<FactorioPrototype.MapTile> {
   const tiles: FactorioPrototype.MapTile[] = []
 
-  for (const [, tile] of game.tile_prototypes) {
+  for (const [, tile] of prototypes.tile) {
     tiles[tiles.length] = {
       type: FactorioPrototype.Type.MapTile,
 
@@ -55,7 +55,7 @@ function getMapTilePrototypes(): PrototypesByType<FactorioPrototype.MapTile> {
 function getEntityPrototypes(): PrototypesByType<FactorioPrototype.Entity> {
   const protos: PrototypesByType<FactorioPrototype.Entity> = {}
 
-  for (const [, entity] of game.entity_prototypes) {
+  for (const [, entity] of prototypes.entity) {
     const key: string = `${entity.group.name}/${entity.subgroup.name}/${entity.type}`
 
     protos[key] ??= []

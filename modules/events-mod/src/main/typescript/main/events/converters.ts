@@ -29,7 +29,7 @@ export namespace Converters {
   }
 
 
-  export function mapColour(color: ColorTable): Colour {
+  export function mapColour(color: Color): Colour {
     return [
       color.r ?? 0,
       color.g ?? 0,
@@ -42,8 +42,8 @@ export namespace Converters {
   export function convertPlacedTiles(
       placedTile: LuaTilePrototype,
       oldTiles: OldTileAndPosition[],
-  ): TileRead[] {
-    const converted: TileRead[] = []
+  ): Tile[] {
+    const converted: Tile[] = []
     for (const [, tile] of ipairs(oldTiles)) {
       converted[converted.length] = {
         position: {x: tile.position.x, y: tile.position.y},
@@ -57,8 +57,8 @@ export namespace Converters {
   export function convertRemovedTiles(
       surface: LuaSurface,
       oldTiles: OldTileAndPosition[],
-  ): TileRead[] {
-    const converted: TileRead[] = []
+  ): Tile[] {
+    const converted: Tile[] = []
     for (const [, tile] of ipairs(oldTiles)) {
       converted[converted.length] = surface.get_tile(tile.position.x, tile.position.y)
     }
@@ -68,7 +68,7 @@ export namespace Converters {
 
   export function convertCollisionMaskToNames(cm: CollisionMask): string[] {
     let masks: string[] = []
-    for (const [name] of pairs(cm)) {
+    for (const [name] of pairs(cm.layers)) {
       masks.push(name)
     }
     return masks
@@ -96,22 +96,22 @@ export namespace Converters {
   }
 
 
-  export function tilePositionToChunkPosition(mapPosition: TilePositionTable): MapChunkPosition {
+  export function tilePositionToChunkPosition(mapPosition: TilePosition): MapChunkPosition {
     return [floor(mapPosition.x / 32), floor(mapPosition.y / 32), ChunkSize.CHUNK_032]
   }
 
 
-  export function mapPositionToChunkPosition(mapPosition: MapPositionTable): MapChunkPosition {
+  export function mapPositionToChunkPosition(mapPosition: MapPosition): MapChunkPosition {
     return [floor(mapPosition.x / 32), floor(mapPosition.y / 32), ChunkSize.CHUNK_032]
   }
 
 
-  export function entityPosition(position: MapPositionTable): MapEntityPosition {
+  export function entityPosition(position: MapPosition): MapEntityPosition {
     return [position.x, position.y];
   }
 
 
-  export function chunkPosition(position: ChunkPositionTable): MapChunkPosition {
+  export function chunkPosition(position: ChunkPosition): MapChunkPosition {
     return [position.x, position.y, ChunkSize.CHUNK_032]
   }
 
@@ -218,6 +218,32 @@ export namespace Converters {
     [ defines.entity_status.waiting_for_train                ]: FactorioEntityStatus.WAITING_FOR_TRAIN,
     [ defines.entity_status.waiting_to_launch_rocket         ]: FactorioEntityStatus.WAITING_TO_LAUNCH_ROCKET,
     [ defines.entity_status.working                          ]: FactorioEntityStatus.WORKING,
+
+    // Factorio 2.0 additions (Space Age / space platforms, agricultural towers, etc.)
+    [ defines.entity_status.ghost                             ]: FactorioEntityStatus.GHOST,
+    [ defines.entity_status.broken                            ]: FactorioEntityStatus.BROKEN,
+    [ defines.entity_status.frozen                            ]: FactorioEntityStatus.FROZEN,
+    [ defines.entity_status.paused                            ]: FactorioEntityStatus.PAUSED,
+    [ defines.entity_status.not_connected_to_hub_or_pad       ]: FactorioEntityStatus.NOT_CONNECTED_TO_HUB_OR_PAD,
+    [ defines.entity_status.not_enough_space_in_output        ]: FactorioEntityStatus.NOT_ENOUGH_SPACE_IN_OUTPUT,
+    [ defines.entity_status.full_burnt_result_output          ]: FactorioEntityStatus.FULL_BURNT_RESULT_OUTPUT,
+    [ defines.entity_status.waiting_for_more_items            ]: FactorioEntityStatus.WAITING_FOR_MORE_ITEMS,
+    [ defines.entity_status.waiting_for_space_in_platform_hub ]: FactorioEntityStatus.WAITING_FOR_SPACE_IN_PLATFORM_HUB,
+    [ defines.entity_status.thrust_not_required               ]: FactorioEntityStatus.THRUST_NOT_REQUIRED,
+    [ defines.entity_status.on_the_way                        ]: FactorioEntityStatus.ON_THE_WAY,
+    [ defines.entity_status.waiting_in_orbit                  ]: FactorioEntityStatus.WAITING_IN_ORBIT,
+    [ defines.entity_status.waiting_at_stop                   ]: FactorioEntityStatus.WAITING_AT_STOP,
+    [ defines.entity_status.waiting_for_rockets_to_arrive     ]: FactorioEntityStatus.WAITING_FOR_ROCKETS_TO_ARRIVE,
+    [ defines.entity_status.not_enough_thrust                 ]: FactorioEntityStatus.NOT_ENOUGH_THRUST,
+    [ defines.entity_status.destination_stop_full             ]: FactorioEntityStatus.DESTINATION_STOP_FULL,
+    [ defines.entity_status.no_path                           ]: FactorioEntityStatus.NO_PATH,
+    [ defines.entity_status.no_filter                         ]: FactorioEntityStatus.NO_FILTER,
+    [ defines.entity_status.no_spot_seedable_by_inputs        ]: FactorioEntityStatus.NO_SPOT_SEEDABLE_BY_INPUTS,
+    [ defines.entity_status.waiting_for_plants_to_grow        ]: FactorioEntityStatus.WAITING_FOR_PLANTS_TO_GROW,
+    [ defines.entity_status.computing_navigation              ]: FactorioEntityStatus.COMPUTING_NAVIGATION,
+    [ defines.entity_status.pipeline_overextended             ]: FactorioEntityStatus.PIPELINE_OVEREXTENDED,
+    [ defines.entity_status.recipe_not_researched             ]: FactorioEntityStatus.RECIPE_NOT_RESEARCHED,
+    [ defines.entity_status.recipe_is_parameter               ]: FactorioEntityStatus.RECIPE_IS_PARAMETER,
     //@formatter:on
   }
 }

@@ -1,4 +1,5 @@
-import {Data, DoubleSettingDefinition} from "typed-factorio/settings/types"
+import {SettingsData} from "factorio:common"
+import {DoubleSettingDefinition} from "factorio:settings"
 import {KafkatorioKeyedPacketData, KafkatorioKeyedPacketTypes} from "../types";
 
 export class KafkatorioSettingsConfig {
@@ -20,7 +21,7 @@ export class KafkatorioSettingsConfig {
   }
 
 
-  public initialiseSettings(data: Data): void {
+  public initialiseSettings(data: SettingsData): void {
     for (const [type,] of pairs(KafkatorioSettingsConfig.eventCacheExpirationDefaultSeconds)) {
       data.extend(
           [KafkatorioSettingsConfig.createDefaultCacheDuration(type)]

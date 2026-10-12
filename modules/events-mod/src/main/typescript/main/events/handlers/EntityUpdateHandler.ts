@@ -64,7 +64,7 @@ export class EntityUpdatesHandler {
   handleBuiltEntityEvent(
       event: OnBuiltEntityEvent | OnRobotBuiltEntityEvent,
   ) {
-    EntityUpdatesHandler.throttleEntityUpdate(event, event.created_entity)
+    EntityUpdatesHandler.throttleEntityUpdate(event, event.entity)
   }
 
 
@@ -191,7 +191,7 @@ export class EntityUpdatesHandler {
   /** Get all resources within a map-area */
   private static getAreaResourceEntities(
       surface: LuaSurface,
-      area: BoundingBoxTable,
+      area: BoundingBox,
   ): LuaEntity[] {
     return surface.find_entities_filtered({
           area: area,

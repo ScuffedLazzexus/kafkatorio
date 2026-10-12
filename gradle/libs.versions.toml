@@ -53,7 +53,7 @@ nimbusJoseJwt         = "9.25.6"        # https://search.maven.org/artifact/com.
 
 npm-luaTypes        = "2.13.1"   # https://www.npmjs.com/package/lua-types
 npm-typescriptToLua = "1.11.1"   # https://www.npmjs.com/package/typescript-to-lua
-npm-typedFactorio   = "1.11.0"   # https://github.com/GlassBricks/typed-factorio/blob/main/Changelog.md https://www.npmjs.com/package/typed-factorio
+npm-typedFactorio   = "3.36.0"   # targets Factorio 2.0.75 ("factorio-2.0" dist-tag); https://github.com/GlassBricks/typed-factorio/blob/main/Changelog.md https://www.npmjs.com/package/typed-factorio
 npm-typescript      = "4.9"      # https://github.com/microsoft/TypeScript/releases
 
 npm-bootswatch      = "5.2.2"    # https://www.jsdelivr.com/package/npm/bootswatch
@@ -65,7 +65,7 @@ mockk      = "1.13.3"            # https://github.com/mockk/mockk/releases/
 
 
 ## infra ##
-factorio               = "1.1.72"    # https://www.factorio.com/download
+factorio               = "2.0.77"    # https://www.factorio.com/download
 confluent-kafkaConnect = "7.0.1"
 grafana                = "8.5.0"
 prometheus             = "v2.34.0"

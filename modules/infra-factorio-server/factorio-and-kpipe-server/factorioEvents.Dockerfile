@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-ARG factorioVersion=1.1.42
+ARG factorioVersion=2.0.77
 
 
 FROM factoriotools/factorio:$factorioVersion

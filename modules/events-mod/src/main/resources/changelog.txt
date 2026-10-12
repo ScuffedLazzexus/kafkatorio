@@ -1,4 +1,9 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.1.0
+  Changes:
+    - Updated for Factorio 2.0.77 (storage API, prototypes.entity/prototypes.tile, new entity statuses)
+    - Declared optional compatibility with Space Exploration and Krastorio 2
+---------------------------------------------------------------------------------------------------
 Version: 0.0.1
   Features:
     - Kafkatorio

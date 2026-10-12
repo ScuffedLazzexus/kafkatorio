@@ -2,18 +2,18 @@ export class EventDataQueueManager {
 
   static init(force?: boolean) {
 
-    const isAnythingUndefined = global.store == undefined ||
-                                global.size == undefined ||
-                                global.head == undefined ||
-                                global.tail == undefined
+    const isAnythingUndefined = storage.store == undefined ||
+                                storage.size == undefined ||
+                                storage.head == undefined ||
+                                storage.tail == undefined
 
     log(`Initialising EventDataQueueManager globals (force=${force}, isAnythingUndefined=${isAnythingUndefined})`)
 
     if (force == true || isAnythingUndefined) {
-      global.store = {}
-      global.head = null
-      global.tail = null
-      global.size = 0
+      storage.store = {}
+      storage.head = null
+      storage.tail = null
+      storage.size = 0
     }
 
     log(`Finished initialising EventDataQueueManager`)
@@ -21,38 +21,38 @@ export class EventDataQueueManager {
 
 
   size(): uint | undefined {
-    return global.size
+    return storage.size
   }
 
 
   enqueue(key: string, event: EventData, weight: int = 1) {
-    if (key ! in global.store) {
+    if (key ! in storage.store) {
       let node = new Node(key, weight)
-      if (global.head == null) {
-        global.head = node
+      if (storage.head == null) {
+        storage.head = node
       }
-      if (global.tail != null) {
-        global.tail.next = node
+      if (storage.tail != null) {
+        storage.tail.next = node
       }
-      global.tail = node
-      global.size++
+      storage.tail = node
+      storage.size++
     }
 
-    global.store[key] = event
+    storage.store[key] = event
   }
 
 
   dequeue(): WeightedPacket | null {
-    if (global.head == null) {
+    if (storage.head == null) {
       return null
     } else {
-      let weight = global.head.weight
-      let storeKey = global.head.storeKey
-      global.head = global.head.next
-      global.size--
+      let weight = storage.head.weight
+      let storeKey = storage.head.storeKey
+      storage.head = storage.head.next
+      storage.size--
 
-      let storedPacket = global.store[storeKey]
-      global.store[storeKey] = null
+      let storedPacket = storage.store[storeKey]
+      storage.store[storeKey] = null
 
       if (storedPacket == null) {
         return null
@@ -93,7 +93,7 @@ const EventDataQueue = new EventDataQueueManager()
 export default EventDataQueue
 
 
-declare const global: {
+declare const storage: {
   store: EventQueueStore
 
   head: Node | null

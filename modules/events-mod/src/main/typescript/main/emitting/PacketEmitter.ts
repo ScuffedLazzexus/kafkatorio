@@ -9,7 +9,7 @@ export class KafkatorioPacketEmitter {
   ) {
     KafkatorioPacketEmitter.emitPacket<KafkatorioPacket>({
       data: data,
-      modVersion: global.MOD_VERSION,
+      modVersion: storage.MOD_VERSION,
       tick: game.tick,
     })
   }
@@ -19,21 +19,21 @@ export class KafkatorioPacketEmitter {
   ) {
     KafkatorioPacketEmitter.emitPacket<KafkatorioPacket>({
       data: data,
-      modVersion: global.MOD_VERSION,
+      modVersion: storage.MOD_VERSION,
       tick: game.tick,
     })
   }
 
   /** Emit a serialised KafkatorioPacket */
   private static emitPacket<T extends KafkatorioPacket>(packet: T) {
-    const data = game.table_to_json(packet)
+    const data = helpers.table_to_json(packet)
 
     if (data.trim().length <= 0) {
       print(`[error] table_to_json returned empty string for packet:${packet}`)
       return
     }
 
-    const encodedData = game.encode_string(data)
+    const encodedData = helpers.encode_string(data)
 
     if (encodedData == null || encodedData.trim().length <= 0) {
       print(`[error] could not encode packet`)

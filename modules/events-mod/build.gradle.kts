@@ -19,6 +19,10 @@ factorioMod {
   modTitle.set("Kafkatorio Events")
   modAuthor.set("adam@adamko.dev")
   factorioCompatibility.set(libs.versions.factorio.map { it.substringBeforeLast(".") })
+  modDependencies.set(listOf(
+    "? space-exploration >= 0.7.0",
+    "? Krastorio2",
+  ))
 }
 
 val licenseFile: RegularFile by rootProject.extra

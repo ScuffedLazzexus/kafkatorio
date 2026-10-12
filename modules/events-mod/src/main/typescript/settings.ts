@@ -1,7 +1,7 @@
-import {Data, Mods} from "typed-factorio/settings/types"
+import {SettingsData, ActiveMods} from "factorio:common"
 import KafkatorioSettings from "./main/settings/KafkatorioSettings";
 
-declare const data: Data
-declare const mods: Mods
+declare const data: SettingsData
+declare const mods: ActiveMods
 
 KafkatorioSettings.initialiseSettings(data)

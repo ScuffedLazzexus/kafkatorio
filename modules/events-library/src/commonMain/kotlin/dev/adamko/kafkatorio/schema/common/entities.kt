@@ -158,6 +158,57 @@ sealed interface FactorioEntityData {
     NOT_CONNECTED_TO_RAIL,
     /** Used by rail signals. */
     CANT_DIVIDE_SEGMENTS,
+
+    // Factorio 2.0 additions (Space Age / space platforms, agricultural towers, etc.)
+
+    /** Used by ghosts. */
+    GHOST,
+    /** Only used if set through `ContainerPrototype::default_status`. */
+    BROKEN,
+    /** Used by entities affected by freezing. */
+    FROZEN,
+    /** Used by space platform hubs. */
+    PAUSED,
+    /** Used by cargo bays. */
+    NOT_CONNECTED_TO_HUB_OR_PAD,
+    /** Used by agricultural towers. */
+    NOT_ENOUGH_SPACE_IN_OUTPUT,
+    /** Used by burner energy sources. */
+    FULL_BURNT_RESULT_OUTPUT,
+    /** Used by inserters when wait_for_full_hand is set. */
+    WAITING_FOR_MORE_ITEMS,
+    /** Used by the rocket silo. */
+    WAITING_FOR_SPACE_IN_PLATFORM_HUB,
+    /** Used by thrusters. */
+    THRUST_NOT_REQUIRED,
+    /** Used by space platform hubs. */
+    ON_THE_WAY,
+    /** Used by space platform hubs. */
+    WAITING_IN_ORBIT,
+    /** Used by trains. */
+    WAITING_AT_STOP,
+    /** Used by space platform hubs. */
+    WAITING_FOR_ROCKETS_TO_ARRIVE,
+    /** Used by space platform hubs. */
+    NOT_ENOUGH_THRUST,
+    /** Used by trains. */
+    DESTINATION_STOP_FULL,
+    /** Used by trains and space platform hubs. */
+    NO_PATH,
+    /** Used by filter inserters. */
+    NO_FILTER,
+    /** Used by agricultural towers. */
+    NO_SPOT_SEEDABLE_BY_INPUTS,
+    /** Used by agricultural towers. */
+    WAITING_FOR_PLANTS_TO_GROW,
+    /** Used by asteroid collectors. */
+    COMPUTING_NAVIGATION,
+    /** Used by pipes, pipes to ground, and storage tanks. */
+    PIPELINE_OVEREXTENDED,
+    /** Used by assembling machines. */
+    RECIPE_NOT_RESEARCHED,
+    /** Used by assembling machines. */
+    RECIPE_IS_PARAMETER,
   }
 
 }
