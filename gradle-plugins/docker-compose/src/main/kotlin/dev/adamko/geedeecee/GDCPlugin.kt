@@ -105,7 +105,7 @@ abstract class GDCPlugin @Inject constructor(
     extensions.create<GDCSettings>(GDC_EXTENSION_NAME).apply {
       composeProjectName.convention(providers.provider { rootProject.name })
       composeProjectVersion.convention(providers.provider { project.version.toString() })
-      containerRegistryHost.convention(providers.gradleProperty("dockerContainerRegistryHost"))
+      containerRegistryHost.convention(providers.gradleProperty("dockerContainerRegistryHost").orElse("localhost"))
       srcDir.convention(layout.projectDirectory.dir("docker"))
       dockerBuildContextDir.convention(srcDir.dir("build"))
       stateDir.convention(layout.buildDirectory.dir("geedeecee/state/"))

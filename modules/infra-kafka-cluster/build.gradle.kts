@@ -15,7 +15,7 @@ tasks.dockerComposeEnvUpdate {
     put("PROMETHEUS_VERSION", libs.versions.prometheus)
     put("KAFKA_VERSION", libs.versions.kafka)
     put("KAFKA_DL_URL", libs.versions.kafka.map { ver ->
-      "https://dlcdn.apache.org/kafka/$ver/kafka_2.13-$ver.tgz"
+      "https://archive.apache.org/dist/kafka/$ver/kafka_2.13-$ver.tgz"
     })
     put("APP_NAME", "kafka-kraft")
   }

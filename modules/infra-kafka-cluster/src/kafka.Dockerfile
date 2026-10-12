@@ -1,9 +1,9 @@
 # syntax=docker/dockerfile:1
 
-ARG KAFKA_DL_URL=https://dlcdn.apache.org/kafka/3.1.0/kafka_2.13-3.1.0.tgz
+ARG KAFKA_DL_URL=https://archive.apache.org/dist/kafka/3.1.0/kafka_2.13-3.1.0.tgz
 
 ## builder ##
-FROM debian:11-slim as Kafka-Download
+FROM debian:12-slim as Kafka-Download
 ARG KAFKA_DL_URL
 
 WORKDIR /kafka
@@ -21,7 +21,7 @@ RUN echo "Downloading Kafka from $KAFKA_DL_URL" \
 ## Kafka ##
 # KRaft (aka KIP-500) mode Preview Release
 # https://github.com/apache/kafka/blob/041b76dc57f096be2a2d7532d917122992bff6e2/config/kraft/README.md
-FROM openjdk:11 as kafka-kraft
+FROM eclipse-temurin:11-jre-jammy as kafka-kraft
 
 WORKDIR /kafka
 
@@ -38,7 +38,8 @@ RUN ./bin/kafka-storage.sh random-uuid > cluster_id \
  && echo "Generated a Kafka Cluster ID: $(cat cluster_id)"
 
 COPY ./kafka-server.properties ./server.properties
-COPY --chmod=755 ./entrypoint.sh ./entrypoint.sh
+COPY ./entrypoint.sh ./entrypoint.sh
+RUN chmod 755 ./entrypoint.sh
 
 # launch the broker in KRaft mode, which means that it runs without ZooKeeper
 ENTRYPOINT ["/kafka/entrypoint.sh"]
