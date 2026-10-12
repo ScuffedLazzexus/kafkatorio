@@ -25,10 +25,23 @@ val jsonMapperKafkatorio = Json {
 }
 
 
-/** @see LuaJsonListSerializer */
+/**
+ * Implements [Collection] by hand, rather than via delegation (`by list`), because delegation
+ * triggers a longstanding Kotlin compiler bug ("accidental override") on the generic `toArray`
+ * method - see [KT-3546](https://youtrack.jetbrains.com/issue/KT-3546). A hand-written
+ * implementation doesn't hit that bug, since it's specific to the delegation codegen path.
+ *
+ * @see LuaJsonListSerializer
+ */
 @Serializable(with = LuaJsonListSerializer::class)
 @JvmInline
-value class LuaJsonList<T>(private val list: List<T>) : List<T> by list
+value class LuaJsonList<T>(val list: List<T>) : Collection<T> {
+  override val size: Int get() = list.size
+  override fun isEmpty(): Boolean = list.isEmpty()
+  override fun contains(element: T): Boolean = list.contains(element)
+  override fun containsAll(elements: Collection<T>): Boolean = list.containsAll(elements)
+  override fun iterator(): Iterator<T> = list.iterator()
+}
 
 
 /**
@@ -68,7 +81,7 @@ class LuaJsonListSerializer<T>(
     }
 
   override fun serialize(encoder: Encoder, value: LuaJsonList<T>) {
-    encoder.encodeSerializableValue(listSerializer, value)
+    encoder.encodeSerializableValue(listSerializer, value.list)
   }
 
   companion object {
