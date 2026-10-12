@@ -48,7 +48,7 @@ export class KafkatorioSettingsConfig {
 
 
   private static cacheDurationSettingName(type: KafkatorioKeyedPacketTypes): string {
-    return `kafkatorio:cache-expiration-seconds_${type.replaceAll(".", "-")}`
+    return `kafkatorio-cache-expiration-seconds_${type.replaceAll(".", "-")}`
   }
 
 }
