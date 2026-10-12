@@ -14,7 +14,8 @@ services:
       - "${APPDATA}/config/kafka-server.properties:/kafka/server.properties:ro"
       # fixed cluster ID, so persisted data survives image rebuilds
       - "${APPDATA}/config/cluster_id:/kafka/cluster_id:ro"
-      - "${APPDATA}/kafka-data:/tmp/kraft-combined-logs"
+      # direct disk path: bypasses Unraid's FUSE layer (shfs), which is slow for Kafka's small writes
+      - "${KAFKA_DATA_DIR}:/tmp/kraft-combined-logs"
 
   ## Process Kafkatorio events
   events-processors:
