@@ -17,6 +17,7 @@ import io.ktor.utils.io.readUTF8Line
 import java.util.EnumSet
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -74,13 +75,15 @@ class SyslogSocketServer(
   private suspend fun handleConnection(
     socket: Socket
   ): Unit = supervisorScope {
+    // Capture this while the socket is open - reading the address of a closed socket throws,
+    // which previously escaped this handler and crashed the whole server, dropping every client.
+    val description = socket.description()
     try {
       val channel = socket.openReadChannel()
-      while (socket.socketContext.isActive && !channel.isClosedForRead) {
+      while (socket.socketContext.isActive) {
 
-        val line = channel.readUTF8Line()
-
-        requireNotNull(line) { "received 'null' line from ${socket.description()}" }
+        // null means the client closed the connection
+        val line = channel.readUTF8Line() ?: break
 
         try {
           val messageContents = syslogParser.parseLine(line)
@@ -92,13 +95,15 @@ class SyslogSocketServer(
 
         yield()
       }
+      log("client closed socket $description")
+    } catch (ex: CancellationException) {
+      throw ex
     } catch (ex: Throwable) {
-      withContext(Dispatchers.IO) { socket.close() }
-      if (ex is CancellationException) {
-        throw ex
-      } else {
-        log("closing socket ${socket.description()}, cause: ${ex::class.qualifiedName} ${ex.message}")
-        ex.printStackTrace()
+      log("closing socket $description, cause: ${ex::class.qualifiedName} ${ex.message}")
+      ex.printStackTrace()
+    } finally {
+      withContext(NonCancellable + Dispatchers.IO) {
+        runCatching { socket.close() }
       }
     }
   }
