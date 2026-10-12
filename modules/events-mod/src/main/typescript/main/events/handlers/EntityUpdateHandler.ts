@@ -210,7 +210,7 @@ export class EntityUpdatesHandler {
   ): LuaEntity[] {
     return surface.find_entities_filtered({
           position: mapPosition,
-          collision_mask: "resource-layer",
+          collision_mask: "resource",
         }
     )
   }
@@ -223,7 +223,7 @@ export class EntityUpdatesHandler {
   ): LuaEntity[] {
     return surface.find_entities_filtered({
           area: area,
-          collision_mask: "resource-layer",
+          collision_mask: "resource",
         }
     )
   }
