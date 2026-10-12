@@ -17,7 +17,7 @@ kafka-streams-config:
   application.id: kafkatorio-events-processor
   bootstrap.servers: ${KAFKA_BOOTSTRAP_SERVERS:-localhost:9092}
   state.dir: ${KAFKA_STREAMS_STATE_DIR:-.state/kafka}
-  num.stream.threads: 1
+  num.stream.threads: ${KAFKA_STREAMS_NUM_THREADS:-1}
   processing.guarantee: exactly_once_v2
   auto.offset.reset: earliest
   default.key.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
