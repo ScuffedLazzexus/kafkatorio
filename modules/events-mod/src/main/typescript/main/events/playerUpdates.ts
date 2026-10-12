@@ -2,6 +2,16 @@ import {Converters} from "./converters";
 import {ForceIndex, KafkatorioPacketData, PlayerUpdateKey} from "../../generated/kafkatorio-schema";
 import packetEmitter from "../emitting/PacketEmitter";
 import PlayerUpdates from "./handlers/PlayerUpdateHandler";
+import {
+  OnPlayerBannedEvent,
+  OnPlayerChangedPositionEvent,
+  OnPlayerChangedSurfaceEvent,
+  OnPlayerDiedEvent,
+  OnPlayerJoinedGameEvent,
+  OnPlayerKickedEvent,
+  OnPlayerRemovedEvent,
+  OnPrePlayerLeftGameEvent,
+} from "factorio:runtime"
 
 
 // function playerUpdateDebounce(playerIndex: uint, mutate: PlayerUpdater) {
@@ -23,7 +33,7 @@ script.on_event(defines.events.on_player_joined_game, (e: OnPlayerJoinedGameEven
         data.characterUnitNumber = player.character?.unit_number ?? null
         data.chatColour = Converters.mapColour(player.chat_color)
         data.colour = Converters.mapColour(player.color)
-        data.forceIndex = player.force.index as ForceIndex
+        data.forceIndex = player.force.index as unknown as ForceIndex
         data.name = player.name
         data.isShowOnMap = player.show_on_map
         data.isSpectator = player.spectator

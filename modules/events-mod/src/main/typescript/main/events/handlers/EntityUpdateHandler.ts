@@ -8,6 +8,34 @@ import {
 } from "../../../generated/kafkatorio-schema";
 import {Converters} from "../converters";
 import EventDataCache from "../../emitting/EventDataCache";
+import {
+  BoundingBox,
+  LuaEntity,
+  LuaSurface,
+  MapPosition,
+  OldTileAndPosition,
+  OnBuiltEntityEvent,
+  OnChunkGeneratedEvent,
+  OnEntityClonedEvent,
+  OnEntityDamagedEvent,
+  OnEntityDiedEvent,
+  OnEntityLogisticSlotChangedEvent,
+  OnEntityRenamedEvent,
+  OnEntitySettingsPastedEvent,
+  OnEntitySpawnedEvent,
+  OnPlayerMinedEntityEvent,
+  OnPlayerMinedTileEvent,
+  OnPlayerRepairedEntityEvent,
+  OnPlayerRotatedEntityEvent,
+  OnPostEntityDiedEvent,
+  OnPreEntitySettingsPastedEvent,
+  OnRobotBuiltEntityEvent,
+  OnRobotMinedEntityEvent,
+  OnRobotMinedTileEvent,
+  OnSelectedEntityChangedEvent,
+  OnTriggerCreatedEntityEvent,
+  SurfaceIndex,
+} from "factorio:runtime"
 
 
 export class EntityUpdatesHandler {
@@ -211,7 +239,6 @@ type EntityUpdateEvent =
 
     | OnEntityClonedEvent
     | OnEntityDamagedEvent
-    | OnEntityDestroyedEvent
     | OnEntityDiedEvent
     | OnEntityLogisticSlotChangedEvent
     | OnEntityRenamedEvent

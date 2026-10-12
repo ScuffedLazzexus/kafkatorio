@@ -1,3 +1,6 @@
+import {EventData, int32 as int, uint32 as uint} from "factorio:runtime"
+
+
 export class EventDataQueueManager {
 
   static init(force?: boolean) {

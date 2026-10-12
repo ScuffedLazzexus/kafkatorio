@@ -52,9 +52,9 @@ nimbusJoseJwt         = "9.25.6"        # https://search.maven.org/artifact/com.
 ## npm ##
 
 npm-luaTypes        = "2.13.1"   # https://www.npmjs.com/package/lua-types
-npm-typescriptToLua = "1.11.1"   # https://www.npmjs.com/package/typescript-to-lua
+npm-typescriptToLua = "1.25.2"   # peer-pins typescript 5.4.2, matching typed-factorio's own dev dependency; https://www.npmjs.com/package/typescript-to-lua
 npm-typedFactorio   = "3.36.0"   # targets Factorio 2.0.75 ("factorio-2.0" dist-tag); https://github.com/GlassBricks/typed-factorio/blob/main/Changelog.md https://www.npmjs.com/package/typed-factorio
-npm-typescript      = "4.9"      # https://github.com/microsoft/TypeScript/releases
+npm-typescript      = "5.4.2"    # https://github.com/microsoft/TypeScript/releases
 
 npm-bootswatch      = "5.2.2"    # https://www.jsdelivr.com/package/npm/bootswatch
 

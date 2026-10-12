@@ -5,6 +5,7 @@ import {
 } from "../../generated/kafkatorio-schema";
 import {Converters} from "./converters";
 import KafkatorioPacketQueue from "../emitting/KafkatorioPacketQueue";
+import {LuaGroup} from "factorio:runtime"
 
 
 type PrototypesByType<T extends FactorioPrototype> = Record<string, T[]>
@@ -70,7 +71,7 @@ function getEntityPrototypes(): PrototypesByType<FactorioPrototype.Entity> {
       isBuilding: entity.is_building,
       isEntityWithOwner: entity.is_entity_with_owner,
       isMilitaryTarget: entity.is_military_target,
-      maxHealth: entity.max_health,
+      maxHealth: entity.get_max_health(),
       collisionBox: Converters.collisionBox(entity.collision_box),
 
       tileWidth: entity.tile_width,

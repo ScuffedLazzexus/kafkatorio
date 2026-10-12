@@ -1,6 +1,7 @@
 import {SettingsData} from "factorio:common"
 import {DoubleSettingDefinition} from "factorio:settings"
 import {KafkatorioKeyedPacketData, KafkatorioKeyedPacketTypes} from "../types";
+import {double, uint32 as uint} from "factorio:runtime"
 
 export class KafkatorioSettingsConfig {
 

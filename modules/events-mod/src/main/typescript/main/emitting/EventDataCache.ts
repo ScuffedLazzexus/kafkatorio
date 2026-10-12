@@ -1,6 +1,7 @@
 import KafkatorioSettings from "../settings/KafkatorioSettings";
 import {KafkatorioKeyedPacketData} from "../types";
 import PacketEmitter from "./PacketEmitter";
+import {uint32 as uint} from "factorio:runtime"
 
 
 declare const storage: {

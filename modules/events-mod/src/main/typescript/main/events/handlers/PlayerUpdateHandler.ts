@@ -1,6 +1,19 @@
 import {KafkatorioPacketData} from "../../../generated/kafkatorio-schema";
 import {Converters} from "../converters";
 import EventUpdates from "../../emitting/EventDataCache";
+import {
+  LuaPlayer,
+  OnPlayerBannedEvent,
+  OnPlayerChangedPositionEvent,
+  OnPlayerChangedSurfaceEvent,
+  OnPlayerDiedEvent,
+  OnPlayerJoinedGameEvent,
+  OnPlayerKickedEvent,
+  OnPlayerRemovedEvent,
+  OnPlayerUnbannedEvent,
+  OnPrePlayerLeftGameEvent,
+  uint32 as uint,
+} from "factorio:runtime"
 
 
 export type PlayerUpdater = (player: LuaPlayer, data: KafkatorioPacketData.PlayerUpdate) => void

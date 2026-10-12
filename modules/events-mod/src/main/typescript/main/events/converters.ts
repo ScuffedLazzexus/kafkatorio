@@ -12,6 +12,21 @@ import {
   MinedProduct,
   PrototypeId,
 } from "../../generated/kafkatorio-schema";
+import {
+  BoundingBox,
+  ChunkPosition,
+  CollisionMask,
+  Color,
+  LuaEntity,
+  LuaEntityPrototype,
+  LuaPlayer,
+  LuaSurface,
+  LuaTilePrototype,
+  MapPosition,
+  OldTileAndPosition,
+  Tile,
+  TilePosition,
+} from "factorio:runtime"
 
 
 export namespace Converters {

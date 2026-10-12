@@ -1,6 +1,7 @@
 import {initGlobal} from "../global-init";
 import {emitPrototypes} from "../events/prototypeUpdates";
 import EventDataQueue from "../emitting/EventDataQueue";
+import {ChunkPosition, CustomCommandData, OnChunkGeneratedEvent} from "factorio:runtime"
 
 
 commands.add_command(

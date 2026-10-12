@@ -1,5 +1,16 @@
 import EntityUpdates from "./handlers/EntityUpdateHandler";
 import MapChunkUpdate from "./handlers/MapChunkUpdateHandler";
+import {
+  OnChunkChartedEvent,
+  OnChunkDeletedEvent,
+  OnChunkGeneratedEvent,
+  OnPlayerBuiltTileEvent,
+  OnPlayerMinedTileEvent,
+  OnPreChunkDeletedEvent,
+  OnRobotBuiltTileEvent,
+  OnRobotMinedTileEvent,
+  ScriptRaisedSetTilesEvent,
+} from "factorio:runtime"
 
 
 export type MapTileChangeEvent =

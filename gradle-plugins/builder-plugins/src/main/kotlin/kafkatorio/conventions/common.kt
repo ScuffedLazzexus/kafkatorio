@@ -8,7 +8,8 @@ import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension
 
 
 object Versions {
-  const val node = "14.19.1"
+  // typescript-to-lua 1.25.2+ (needed for typed-factorio 3.x / Factorio 2.0) requires Node >=16.10.0
+  const val node = "24.21.0"
 }
 
 

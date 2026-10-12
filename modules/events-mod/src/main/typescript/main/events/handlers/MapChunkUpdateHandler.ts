@@ -7,6 +7,18 @@ import {
 } from "../../../generated/kafkatorio-schema";
 import EventUpdates, {PacketKey} from "../../emitting/EventDataCache";
 import {MapChunkUpdateEvent, MapTileChangeEvent} from "../mapChunkUpdates";
+import {
+  LuaSurface,
+  OnChunkGeneratedEvent,
+  OnPlayerBuiltTileEvent,
+  OnPlayerMinedTileEvent,
+  OnPreChunkDeletedEvent,
+  OnRobotBuiltTileEvent,
+  OnRobotMinedTileEvent,
+  ScriptRaisedSetTilesEvent,
+  Tile,
+  uint32 as uint,
+} from "factorio:runtime"
 
 
 type MapChunkTileUpdater = (data: KafkatorioPacketData.MapChunkTileUpdate) => void

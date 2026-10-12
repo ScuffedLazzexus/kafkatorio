@@ -1,6 +1,7 @@
 import PacketEmitter from "../emitting/PacketEmitter";
 import {KafkatorioPacketData} from "../../generated/kafkatorio-schema";
 import Type = KafkatorioPacketData.Type;
+import {LuaSurface, OnTickEvent} from "factorio:runtime"
 
 
 export function handleSurfaceUpdate(
