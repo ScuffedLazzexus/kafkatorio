@@ -3,6 +3,7 @@ import {Converters} from "./converters";
 import {handleSurfaceUpdate} from "./surfaceUpdates";
 import EventCacheService from "../emitting/EventDataCache";
 import MapChunkUpdate from "./handlers/MapChunkUpdateHandler";
+import EntityUpdates from "./handlers/EntityUpdateHandler";
 import KafkatorioPacketQueue from "../emitting/KafkatorioPacketQueue";
 import PacketEmitter from "../emitting/PacketEmitter";
 import {KafkatorioPacketData} from "../../generated/kafkatorio-schema";
@@ -43,6 +44,7 @@ script.on_event(defines.events.on_tick, (event: OnTickEvent) => {
 
           log(`[on_tick:${event.tick}] dequeued event ${eName}, delay ${i}`)
           MapChunkUpdate.handleChunkGeneratedEvent(event, i)
+          EntityUpdates.handleChunkGeneratedEvent(event)
           i += 1
         }
       }

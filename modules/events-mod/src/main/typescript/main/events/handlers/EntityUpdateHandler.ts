@@ -105,6 +105,13 @@ export class EntityUpdatesHandler {
         Converters.chunkPosition(event.position),
         entities,
     )
+
+    // Buildings that already exist are otherwise only sent when they're built or mined, so
+    // include them, so that re-sending chunks (`/kafkatorio chunks`) also sends existing bases.
+    // (Newly generated chunks won't contain any.)
+    for (const building of EntityUpdatesHandler.getAreaPlayerBuildings(event.surface, event.area)) {
+      EntityUpdatesHandler.throttleEntityUpdate(event, building)
+    }
   }
 
 
@@ -216,6 +223,21 @@ export class EntityUpdatesHandler {
   }
 
 
+  /** Get all player-force buildings within a map-area (excluding player characters) */
+  private static getAreaPlayerBuildings(
+      surface: LuaSurface,
+      area: BoundingBox,
+  ): LuaEntity[] {
+    const buildings: LuaEntity[] = []
+    for (const entity of surface.find_entities_filtered({area: area, force: "player"})) {
+      if (entity.type != "character") {
+        buildings[buildings.length] = entity
+      }
+    }
+    return buildings
+  }
+
+
   /** Get all resources within a map-area */
   private static getAreaResourceEntities(
       surface: LuaSurface,
@@ -236,6 +258,7 @@ export default EntityUpdates
 
 type EntityUpdateEvent =
     | OnBuiltEntityEvent
+    | OnChunkGeneratedEvent
 
     | OnEntityClonedEvent
     | OnEntityDamagedEvent
