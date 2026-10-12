@@ -50,3 +50,41 @@ build the project, and Docker Compose to create images.
    ```terminal
    docker-compose up -d; docker-compose logs -f
    ```
+
+### Unraid set up
+
+> See [./kafkatorio-platform/unraid/docker-compose.yml](kafkatorio-platform/unraid/docker-compose.yml)
+
+This runs the Kafkatorio services on the same Unraid server as the Factorio server. The Docker
+syslog log driver runs in the Docker daemon on the host, so the syslog port only needs to listen
+on `127.0.0.1`, and Kafka isn't exposed at all.
+
+1. Install the *Compose Manager* plugin (or *Compose Manager Plus*) from the Apps tab.
+2. Build the images locally, and copy them to Unraid (no registry needed):
+
+   ```terminal
+   ./gradlew dockerComposeBuild
+   docker save $(docker images --format '{{.Repository}}:{{.Tag}}' | grep dev.adamko.kafkatorio) \
+     | gzip | ssh root@<unraid> 'gunzip | docker load'
+   ```
+3. On Unraid, create `/mnt/user/appdata/kafkatorio-platform/` containing
+    * `.secret.kafkatorio-config.yml` (see above)
+    * `config/kafka-server.properties` (copy from [./kafkatorio-platform/config](kafkatorio-platform/config))
+    * `config/cluster_id` - a fixed Kafka cluster ID, so the Kafka data survives image rebuilds.
+      Generate one with `docker run --rm --entrypoint ./bin/kafka-storage.sh <kafka-kraft image> random-uuid`.
+4. Create a Compose Manager stack, with the Unraid `docker-compose.yml`, and
+   [`example.env`](kafkatorio-platform/unraid/example.env) as its `.env`. Start the stack.
+5. Edit the Factorio container, enable 'Advanced View', and set 'Extra Parameters' to
+
+   ```
+   --log-driver=syslog --log-opt syslog-address=tcp://127.0.0.1:12035 --log-opt syslog-format=rfc5424 --log-opt mode=non-blocking --log-opt tag=<KAFKATORIO_TOKEN>
+   ```
+
+   Docker won't start a container if its TCP syslog server isn't reachable, so on the Docker tab
+   give the Factorio container an autostart 'wait' of ~30 seconds, so the Kafkatorio services start
+   first.
+6. The web map is on port `12081`. It also proxies `/kafkatorio/` to the events server, so a
+   reverse proxy (e.g. Nginx Proxy Manager) only needs to forward to that one port - make sure
+   WebSocket support is enabled.
+7. In Factorio, run `/kafkatorio prototypes` and then `/kafkatorio chunks 10` to send the existing
+   map.

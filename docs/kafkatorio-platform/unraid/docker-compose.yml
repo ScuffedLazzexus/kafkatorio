@@ -1,0 +1,96 @@
+name: kafkatorio
+
+services:
+
+  ## Kafka (KRaft mode). Only reachable by the other containers.
+  infra-kafka:
+    image: ${REGISTRY_HOST}/dev.adamko.kafkatorio/kafka-kraft:${KAFKATORIO_VERSION}
+    container_name: kafkatorio-kafka
+    restart: unless-stopped
+    networks:
+      kafkatorio-nw:
+        aliases: [ kafka ]
+    volumes:
+      - "${APPDATA}/config/kafka-server.properties:/kafka/server.properties:ro"
+      # fixed cluster ID, so persisted data survives image rebuilds
+      - "${APPDATA}/config/cluster_id:/kafka/cluster_id:ro"
+      - "${APPDATA}/kafka-data:/tmp/kraft-combined-logs"
+
+  ## Process Kafkatorio events
+  events-processors:
+    image: ${REGISTRY_HOST}/dev.adamko.kafkatorio/events-processors:${KAFKATORIO_VERSION}
+    container_name: kafkatorio-events-processors
+    restart: unless-stopped
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+    networks: [ kafkatorio-nw ]
+    depends_on: [ infra-kafka ]
+    volumes:
+      - "${APPDATA}/state/events-processors:/app/state"
+    secrets:
+      - source: kafkatorio_config
+        target: /.secret.config.yml
+
+  ## Receives packets from the Factorio server, forwarded by the Docker syslog log driver.
+  ## The log driver runs in the Docker daemon on the host, so localhost-only is enough.
+  events-server-syslog:
+    image: ${REGISTRY_HOST}/dev.adamko.kafkatorio/events-server-syslog:${KAFKATORIO_VERSION}
+    container_name: kafkatorio-events-server-syslog
+    restart: unless-stopped
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      SOCKET_SERVER_HOST: "0.0.0.0"
+      SOCKET_SERVER_PORT: "9002"
+    ports:
+      - "127.0.0.1:12035:9002"
+    networks: [ kafkatorio-nw ]
+    depends_on: [ infra-kafka ]
+    secrets:
+      - source: kafkatorio_config
+        target: /.secret.config.yml
+
+  ## Hosts map tiles and forwards websocket messages to browsers
+  events-server-web:
+    image: ${REGISTRY_HOST}/dev.adamko.kafkatorio/events-server-web:${KAFKATORIO_VERSION}
+    container_name: events-server-web # web-map's nginx proxies to this hostname
+    restart: unless-stopped
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      WEB_SERVER_PORT: "80"
+    networks: [ kafkatorio-nw ]
+    depends_on: [ infra-kafka ]
+    volumes:
+      - "${APPDATA}/data/events-server-web:/app/data"
+      - "${APPDATA}/state/events-server-web:/app/state"
+    secrets:
+      - source: kafkatorio_config
+        target: /.secret.config.yml
+
+  ## Web map (also proxies /kafkatorio/ to events-server-web). Point Nginx Proxy Manager here.
+  web-map:
+    image: ${REGISTRY_HOST}/dev.adamko.kafkatorio/web-map:${KAFKATORIO_VERSION}
+    container_name: kafkatorio-web-map
+    restart: unless-stopped
+    ports:
+      - "12081:80"
+    networks: [ kafkatorio-nw ]
+
+  ## Kafka admin UI - LAN/DMZ only, don't proxy this publicly
+  infra-kafka-ui:
+    image: provectuslabs/kafka-ui:v0.4.0
+    container_name: kafkatorio-kafka-ui
+    restart: unless-stopped
+    ports:
+      - "18090:8080"
+    networks: [ kafkatorio-nw ]
+    depends_on: [ infra-kafka ]
+    environment:
+      KAFKA_CLUSTERS_0_NAME: "kafkatorio"
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: "kafka:29092"
+
+secrets:
+  kafkatorio_config:
+    file: ${APPDATA}/.secret.kafkatorio-config.yml
+
+networks:
+  kafkatorio-nw:
