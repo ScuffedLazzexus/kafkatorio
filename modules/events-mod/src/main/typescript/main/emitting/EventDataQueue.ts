@@ -29,7 +29,7 @@ export class EventDataQueueManager {
 
 
   enqueue(key: string, event: EventData, weight: int = 1) {
-    if (key ! in storage.store) {
+    if (storage.store[key] == undefined) {
       let node = new Node(key, weight)
       if (storage.head == null) {
         storage.head = node

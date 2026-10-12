@@ -60,7 +60,7 @@ commands.add_command(
                   }
 
                   EventDataQueue.enqueue(
-                      `${surface.index}${chunk.x}${chunk.y}`,
+                      `${surface.index}_${chunk.x}_${chunk.y}`,
                       data,
                       50
                   )
