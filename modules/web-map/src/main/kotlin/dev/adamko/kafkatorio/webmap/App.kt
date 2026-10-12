@@ -26,6 +26,7 @@ import io.kvision.redux.createReduxStore
 import io.kvision.require
 import io.kvision.startApplication
 import io.kvision.state.bind
+import io.kvision.state.sub
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -78,7 +79,13 @@ object App : Application() {
         headerNav(state)
       }
 
-      main().bind(siteStateStore) { state ->
+      // Only re-render when the page itself changes. Re-rendering on every state update (e.g. each
+      // player position update) re-attaches the Leaflet map to a new element, which blanks the map.
+      val pageState = siteStateStore.sub { state ->
+        Triple(state.view, state.serverIds, state.factorioGameState?.map)
+      }
+      main().bind(pageState) { _ ->
+        val state = siteStateStore.getState()
         div(className = "container-fluid") {
           when (state.view) {
             SiteView.HOME   -> homePage(state)

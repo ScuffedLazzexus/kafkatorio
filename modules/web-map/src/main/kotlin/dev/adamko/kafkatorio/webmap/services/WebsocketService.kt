@@ -18,6 +18,7 @@ import dev.adamko.kafkatorio.webmap.config.ApplicationProperties
 import dev.adamko.kafkatorio.webmap.config.jsonMapper
 import dev.adamko.kafkatorio.webmap.rootJob
 import kotlin.coroutines.CoroutineContext
+import kotlinx.browser.window
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -36,17 +37,25 @@ object WebsocketService : CoroutineScope {
   override val coroutineContext: CoroutineContext =
     Dispatchers.Default + CoroutineName("WebsocketService") + Job(rootJob)
 
-  private val ws = WebSocket(ApplicationProperties.websocketServerUrl)
+  private const val RECONNECT_DELAY_MS = 5_000
+
+  private var ws: WebSocket = connect()
 
   private val packetsMutableFlow = MutableSharedFlow<EventServerPacket>()
   val packetsFlow: SharedFlow<EventServerPacket>
     get() = packetsMutableFlow.asSharedFlow()
 
-  init {
-    ws.onmessage = ::handleMessageEvent
-    ws.onerror = ::handleError
-
-    println("[WebsocketService] init ${ws.url}, ${ws.protocol}")
+  /** Open a websocket, and automatically reconnect if it closes (e.g. server restart, proxy timeout). */
+  private fun connect(): WebSocket {
+    val socket = WebSocket(ApplicationProperties.websocketServerUrl)
+    socket.onmessage = ::handleMessageEvent
+    socket.onerror = ::handleError
+    socket.onclose = {
+      println("[WebsocketService] closed, reconnecting in ${RECONNECT_DELAY_MS}ms")
+      window.setTimeout({ ws = connect() }, RECONNECT_DELAY_MS)
+    }
+    println("[WebsocketService] connecting ${socket.url}")
+    return socket
   }
 
   private fun handleMessageEvent(msg: MessageEvent) {

@@ -13,6 +13,9 @@ fun Application.webmapWebsocketServer(
   wsServer: WebmapWebsocketServer,
 ) {
   install(WebSockets) {
+    // keep idle connections alive through reverse proxies (e.g. nginx closes after 60s by default)
+    pingPeriodMillis = 30_000
+
     extensions {
       install(WebSocketDeflateExtension) {
         // Compression level to use for java.util.zip.Deflater
