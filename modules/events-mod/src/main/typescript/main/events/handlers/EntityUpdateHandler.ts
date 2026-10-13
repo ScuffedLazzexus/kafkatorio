@@ -198,9 +198,10 @@ export class EntityUpdatesHandler {
               data.amounts[`${entity.position.x}`] ??= {}
               data.amounts[`${entity.position.x}`][`${entity.position.y}`] = entity.amount
 
-              // initial_amount can be nil even for infinite resources (e.g. crude oil), so also
-              // check the prototype. An initial amount marks the resource as infinite.
-              if (entity.prototype.infinite_resource) {
+              // initial_amount and infinite_resource aren't reliable for infinite resources (e.g.
+              // crude oil reports infinite_resource=false), but only infinite resources have a
+              // minimum yield. An initial amount marks the resource as infinite.
+              if (entity.prototype.infinite_resource || (entity.prototype.minimum_resource_amount ?? 0) > 0) {
                 data.initialAmounts ??= {}
                 data.initialAmounts[`${entity.position.x}`] ??= {}
                 data.initialAmounts[`${entity.position.x}`][`${entity.position.y}`] =
