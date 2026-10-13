@@ -23,6 +23,9 @@ kafka-streams-config:
   # repeated updates to the same (large) map chunk be merged before being forwarded.
   commit.interval.ms: ${KAFKA_STREAMS_COMMIT_INTERVAL_MS:-100}
   cache.max.bytes.buffering: ${KAFKA_STREAMS_CACHE_MAX_BYTES:-10485760}
+  # Under exactly_once_v2 Streams defaults the transaction timeout to 10s. It must be well above
+  # commit.interval.ms, or transactions time out, get fenced, and the work is redone.
+  producer.transaction.timeout.ms: ${KAFKA_STREAMS_TRANSACTION_TIMEOUT_MS:-60000}
   processing.guarantee: exactly_once_v2
   auto.offset.reset: earliest
   default.key.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
