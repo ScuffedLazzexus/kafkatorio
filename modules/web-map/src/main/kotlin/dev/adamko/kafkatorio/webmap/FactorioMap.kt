@@ -1,12 +1,15 @@
 package dev.adamko.kafkatorio.webmap
 
 import dev.adamko.kafkatorio.schema.common.FactorioServerId
+import dev.adamko.kafkatorio.schema.common.ResourcePatch
 import dev.adamko.kafkatorio.schema.common.ServerMapTileLayer
 import dev.adamko.kafkatorio.schema.common.ServerMapTilePngFilename
 import dev.adamko.kafkatorio.schema.packets.EventServerPacket
 import dev.adamko.kafkatorio.webmap.externals.TileOnLoadFn
 import dev.adamko.kafkatorio.webmap.externals.tileOnLoad
+import dev.adamko.kafkatorio.webmap.services.EventsServerClient
 import dev.adamko.kafkatorio.webmap.services.WebsocketService
+import dev.adamko.kafkatorio.webmap.services.latLng
 import io.kvision.maps.Maps
 import io.kvision.maps.Maps.Companion.L
 import io.kvision.maps.externals.leaflet.DoneCallback
@@ -27,6 +30,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.await
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -39,6 +43,7 @@ import org.w3c.fetch.RELOAD
 import org.w3c.fetch.RequestCache
 import org.w3c.fetch.RequestInit
 import org.w3c.fetch.RequestMode
+import kotlin.time.Duration.Companion.seconds
 
 
 class FactorioMap(
@@ -65,6 +70,8 @@ class FactorioMap(
 
   val playerIconsLayer: LayerGroup = LayerGroup()
 
+  private val resourcePatchesLayer: LayerGroup = LayerGroup()
+
   init {
 
     val baseLayers: Control.LayersObject = jso {
@@ -73,6 +80,7 @@ class FactorioMap(
 
     val overlays: Control.LayersObject = jso {
       set("Players", playerIconsLayer)
+      set("Resource patches", resourcePatchesLayer)
       set("Resources", resourcesTileLayer)
       set("Buildings", buildingsTileLayer)
     }
@@ -104,6 +112,15 @@ class FactorioMap(
       buildingsTileLayer.addTo(this)
 
       playerIconsLayer.addTo(this)
+      resourcePatchesLayer.addTo(this)
+    }
+
+    coroutineScope.launch {
+      while (true) {
+        runCatching { refreshResourcePatches() }
+          .onFailure { println("[FactorioMap] failed to refresh resource patches: $it") }
+        delay(60.seconds)
+      }
     }
 
 
@@ -144,6 +161,24 @@ class FactorioMap(
           }.await()
         }
       }
+  }
+
+
+  private suspend fun refreshResourcePatches() {
+    // TODO the map only shows surface 1 (Nauvis) for now
+    val patches = EventsServerClient.resourcePatches(serverId, surfaceIndex = 1)
+      .filter { it.isInfinite || it.tileCount >= MIN_RESOURCE_PATCH_TILES }
+
+    resourcePatchesLayer.clearLayers()
+    patches.forEach { patch ->
+      val label = L.divIcon {
+        className = "resource-patch-label"
+        html = "<span>${patch.displayName()}<br>${patch.displayAmount()}</span>"
+      }
+      L.marker(patch.centre.latLng()) {
+        icon = label
+      }.bindTooltip(patch.tooltip()).addTo(resourcePatchesLayer)
+    }
   }
 
 
@@ -191,5 +226,35 @@ class FactorioMap(
   companion object {
     /** Add this attribute to `<img>` tiles that need to be dynamically refreshed. */
     const val DYNAMIC_RELOAD_ATT = "dynamic-reload"
+
+    /** Hide stray resource tiles that aren't really a patch */
+    private const val MIN_RESOURCE_PATCH_TILES = 10
   }
+}
+
+
+/** e.g. `iron-ore` -> `Iron ore` */
+private fun ResourcePatch.displayName(): String =
+  protoId.name.toString().replace('-', ' ').replaceFirstChar { it.uppercase() }
+
+
+/** e.g. `2.4M`, or `12 wells` for infinite resources */
+private fun ResourcePatch.displayAmount(): String =
+  if (isInfinite) "$tileCount wells" else formatAmount(totalAmount)
+
+
+private fun ResourcePatch.tooltip(): String = buildString {
+  append("${displayName()}: ")
+  append(if (isInfinite) "$tileCount wells" else "${formatAmount(totalAmount)} in $tileCount tiles")
+  val width = (rightBottom.x - leftTop.x).toInt()
+  val height = (rightBottom.y - leftTop.y).toInt()
+  append(" (${width}x$height, centre [${centre.x.toInt()}, ${centre.y.toInt()}])")
+}
+
+
+private fun formatAmount(amount: Long): String = when {
+  amount >= 1_000_000_000 -> "${(amount / 100_000_000) / 10.0}B"
+  amount >= 1_000_000     -> "${(amount / 100_000) / 10.0}M"
+  amount >= 1_000         -> "${(amount / 100) / 10.0}k"
+  else                    -> "$amount"
 }

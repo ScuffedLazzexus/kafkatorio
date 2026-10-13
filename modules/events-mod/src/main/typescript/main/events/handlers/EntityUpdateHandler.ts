@@ -198,10 +198,13 @@ export class EntityUpdatesHandler {
               data.amounts[`${entity.position.x}`] ??= {}
               data.amounts[`${entity.position.x}`][`${entity.position.y}`] = entity.amount
 
-              if (entity.initial_amount != null) {
+              // initial_amount can be nil even for infinite resources (e.g. crude oil), so also
+              // check the prototype. An initial amount marks the resource as infinite.
+              if (entity.prototype.infinite_resource) {
                 data.initialAmounts ??= {}
                 data.initialAmounts[`${entity.position.x}`] ??= {}
-                data.initialAmounts[`${entity.position.x}`][`${entity.position.y}`] = entity.initial_amount
+                data.initialAmounts[`${entity.position.x}`][`${entity.position.y}`] =
+                    entity.initial_amount ?? entity.prototype.normal_resource_amount ?? 0
               }
             }
           }

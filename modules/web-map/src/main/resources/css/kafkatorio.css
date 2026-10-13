@@ -11,3 +11,23 @@
   /* make the Leaflet map background transparent, so it matches the site theme */
   background-color: rgba(255, 0, 0, 0.0) !important;
 }
+
+/* resource patch labels, e.g. 'Iron ore / 2.4M' - centred on the patch, readable on any terrain */
+.resource-patch-label {
+  width: auto !important;
+  height: auto !important;
+  background: none;
+  border: none;
+}
+
+.resource-patch-label span {
+  display: block;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+  text-align: center;
+  font-size: 12px;
+  font-weight: bold;
+  line-height: 1.2;
+  color: #fff;
+  text-shadow: 0 0 3px #000, 0 0 3px #000, 0 0 2px #000;
+}

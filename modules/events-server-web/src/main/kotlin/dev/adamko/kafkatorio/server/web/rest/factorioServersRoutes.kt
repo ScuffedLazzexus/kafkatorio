@@ -7,6 +7,9 @@ import dev.adamko.kafkatorio.schema.common.ServerMapTilePngFilename
 import dev.adamko.kafkatorio.schema.common.SurfaceIndex
 import dev.adamko.kafkatorio.processor.config.ApplicationProperties
 import dev.adamko.kafkatorio.server.web.config.jsonMapper
+import dev.adamko.kafkatorio.server.web.resources.ResourcePatchService
+import dev.adamko.kafkatorio.schema.common.ResourcePatch
+import kotlinx.serialization.builtins.ListSerializer
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.EntityTagVersion
 import io.ktor.http.content.versions
@@ -27,6 +30,7 @@ import kotlinx.serialization.json.encodeToJsonElement
 
 internal fun Routing.factorioServersRoutes(
   appProps: ApplicationProperties,
+  resourcePatchService: ResourcePatchService,
 ) {
 
   get<FactorioServers> {
@@ -37,6 +41,11 @@ internal fun Routing.factorioServersRoutes(
 
   get<FactorioServer.MapData.Tile> { tile ->
     handleTileRequest(tile, appProps)
+  }
+
+  get<FactorioServer.MapData.ResourcePatches> { request ->
+    val patches = resourcePatchService.patches(request.mapData.server.factorioServerId, request.surfaceIndex)
+    call.respond(jsonMapper.encodeToJsonElement(ListSerializer(ResourcePatch.serializer()), patches))
   }
 }
 
@@ -99,6 +108,13 @@ data class FactorioServer(
       val zoomLevel: Int,
       val chunkX: Int,
       val chunkY: Int,
+    )
+
+    @Serializable
+    @Resource("resources/s{surfaceIndex}/patches")
+    data class ResourcePatches(
+      val mapData: MapData,
+      val surfaceIndex: SurfaceIndex,
     )
 
     @Serializable

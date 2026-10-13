@@ -2,6 +2,7 @@ package dev.adamko.kafkatorio.server.web
 
 
 import dev.adamko.kafkatorio.processor.config.ApplicationProperties
+import dev.adamko.kafkatorio.server.web.resources.ResourcePatchService
 import dev.adamko.kafkatorio.server.web.rest.webmapTileServer
 import dev.adamko.kafkatorio.server.web.websocket.WebmapWebsocketServer
 import dev.adamko.kafkatorio.server.web.websocket.webmapWebsocketServer
@@ -13,6 +14,7 @@ import kotlinx.coroutines.coroutineScope
 internal suspend fun startWebServer(
   appProps: ApplicationProperties,
   wsServer: WebmapWebsocketServer,
+  resourcePatchService: ResourcePatchService,
 ): Unit = coroutineScope {
 
   embeddedServer(
@@ -22,7 +24,7 @@ internal suspend fun startWebServer(
 
     webmapWebsocketServer(wsServer)
 
-    webmapTileServer(appProps)
+    webmapTileServer(appProps, resourcePatchService)
 
   }.start(wait = true)
 }
