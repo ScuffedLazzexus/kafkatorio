@@ -11,6 +11,7 @@ import EventDataCache from "../../emitting/EventDataCache";
 import {
   BoundingBox,
   LuaEntity,
+  LuaRecipePrototype,
   LuaSurface,
   MapPosition,
   OldTileAndPosition,
@@ -137,6 +138,8 @@ export class EntityUpdatesHandler {
       isRotatable: entity.rotatable,
       lastUser: entity.last_user?.index,
       status: Converters.entityStatus(entity.status),
+      direction: entity.supports_direction ? entity.direction : undefined,
+      recipe: EntityUpdatesHandler.recipeName(entity),
     }
 
     EventDataCache.throttle<KafkatorioPacketData.MapChunkEntityUpdate>(
@@ -153,6 +156,22 @@ export class EntityUpdatesHandler {
           data.entitiesXY[`${entity.position.x}`][`${entity.position.y}`] ??= entityUpdate
         }
     )
+  }
+
+
+  /** The recipe of a crafting machine. Furnaces only have a recipe while working, so use the last one. */
+  private static recipeName(entity: LuaEntity): string | undefined {
+    if (entity.type == "assembling-machine" || entity.type == "rocket-silo") {
+      const [recipe] = entity.get_recipe()
+      return recipe?.name
+    } else if (entity.type == "furnace") {
+      const [recipe] = entity.get_recipe()
+      if (recipe != undefined) return recipe.name
+      // documented as a prototype, but be lenient in case it's a name
+      const previous = entity.previous_recipe?.name as LuaRecipePrototype | string | undefined
+      return typeof previous == "string" ? previous : previous?.name
+    }
+    return undefined
   }
 
 

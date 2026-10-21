@@ -174,7 +174,9 @@ data class MapChunkEntityUpdate(
         health = entity.health,
         isActive = entity.isActive,
         isRotatable = entity.isRotatable,
-        lastUser = entity.lastUser
+        lastUser = entity.lastUser,
+        direction = entity.direction,
+        recipe = entity.recipe,
       )
     }
 }

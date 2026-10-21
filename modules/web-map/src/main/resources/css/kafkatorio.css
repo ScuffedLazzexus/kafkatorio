@@ -31,3 +31,12 @@
   color: #fff;
   text-shadow: 0 0 3px #000, 0 0 3px #000, 0 0 2px #000;
 }
+
+.surface-select select {
+  border: none;
+  padding: 4px 6px;
+  font-size: 14px;
+  background: #fff;
+  color: #333;
+  cursor: pointer;
+}

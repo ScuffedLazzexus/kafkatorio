@@ -9,6 +9,8 @@ import dev.adamko.kafkatorio.processor.config.ApplicationProperties
 import dev.adamko.kafkatorio.server.web.config.jsonMapper
 import dev.adamko.kafkatorio.server.web.buildings.BuildingService
 import dev.adamko.kafkatorio.server.web.resources.ResourcePatchService
+import dev.adamko.kafkatorio.server.web.surfaces.SurfaceService
+import dev.adamko.kafkatorio.schema.common.MapSurface
 import dev.adamko.kafkatorio.schema.common.MapBuilding
 import dev.adamko.kafkatorio.schema.common.MapEntityPosition
 import dev.adamko.kafkatorio.schema.common.ResourcePatch
@@ -35,12 +37,18 @@ internal fun Routing.factorioServersRoutes(
   appProps: ApplicationProperties,
   resourcePatchService: ResourcePatchService,
   buildingService: BuildingService,
+  surfaceService: SurfaceService,
 ) {
 
   get<FactorioServers> {
     val serverIds = appProps.kafkatorioServers.values.toSet().sortedBy { it.id }
     val serverIdsJson = jsonMapper.encodeToJsonElement(serverIds)
     call.respond(serverIdsJson)
+  }
+
+  get<FactorioServer.MapData.Surfaces> { request ->
+    val surfaces = surfaceService.surfaces(request.mapData.server.factorioServerId)
+    call.respond(jsonMapper.encodeToJsonElement(ListSerializer(MapSurface.serializer()), surfaces))
   }
 
   get<FactorioServer.MapData.Tile> { tile ->
@@ -122,6 +130,12 @@ data class FactorioServer(
       val zoomLevel: Int,
       val chunkX: Int,
       val chunkY: Int,
+    )
+
+    @Serializable
+    @Resource("surfaces")
+    data class Surfaces(
+      val mapData: MapData,
     )
 
     @Serializable

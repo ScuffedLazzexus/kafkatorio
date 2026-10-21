@@ -6,8 +6,8 @@ The icons belong to Wube and the mod authors, so they're not in this repo. Inste
 from a Factorio client that has the same mods as the server:
 
     factorio --dump-data              # script-output/data-raw-dump.json
-    factorio --dump-prototype-locale  # script-output/entity-locale.json
-    factorio --dump-icon-sprites      # script-output/entity/*.png
+    factorio --dump-prototype-locale  # script-output/entity-locale.json, recipe-locale.json
+    factorio --dump-icon-sprites      # script-output/entity/*.png, recipe/*.png
 
 (For a Steam install, set `SteamAppId=427520` so that Steam doesn't relaunch the game.)
 
@@ -20,6 +20,9 @@ and mount <output-dir> in the web-map container at /usr/share/nginx/icons.
 The output contains
   - buildings.json: {"<entity name>": {"w": <tiles>, "h": <tiles>, "name": "<display name>"}}
   - entity/<entity name>.png
+  - recipes.json: {"<recipe name>": "<display name>"}
+  - resources.json: {"<resource name>": "<display name>"}
+  - recipe/<recipe name>.png
 """
 
 import json
@@ -62,7 +65,22 @@ def main(script_output: Path, output_dir: Path):
             shutil.copyfile(icon, output_dir / "entity" / f"{name}.png")
 
     (output_dir / "buildings.json").write_text(json.dumps(buildings, indent=1, sort_keys=True))
-    print(f"exported {len(buildings)} buildings to {output_dir}")
+
+    # recipes, shown on crafting machines
+    recipe_names = json.loads((script_output / "recipe-locale.json").read_text()).get("names", {})
+    (output_dir / "recipe").mkdir(exist_ok=True)
+    recipes = {}
+    for icon in (script_output / "recipe").glob("*.png"):
+        recipes[icon.stem] = recipe_names.get(icon.stem, icon.stem)
+        shutil.copyfile(icon, output_dir / "recipe" / icon.name)
+    (output_dir / "recipes.json").write_text(json.dumps(recipes, indent=1, sort_keys=True))
+
+    # resource names, for the resource patch labels
+    resources = {name: names.get(name, name) for name in data_raw.get("resource", {})}
+    (output_dir / "resources.json").write_text(json.dumps(resources, indent=1, sort_keys=True))
+
+    print(f"exported {len(buildings)} buildings, {len(recipes)} recipes and {len(resources)} resources"
+          f" to {output_dir}")
 
 
 if __name__ == "__main__":

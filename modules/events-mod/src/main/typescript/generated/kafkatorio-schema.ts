@@ -306,6 +306,8 @@ export interface FactorioEntityUpdateElementStandard {
   isActive?: boolean;
   isRotatable?: boolean;
   lastUser?: UInt | null;
+  direction?: UByte | null;
+  recipe?: string | null;
 }
 
 export type MinedProduct =

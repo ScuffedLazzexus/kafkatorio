@@ -6,6 +6,7 @@ import dev.adamko.kafkatorio.server.processor.topology.broadcastToWebsocket
 import dev.adamko.kafkatorio.server.processor.topology.saveMapTiles
 import dev.adamko.kafkatorio.server.web.buildings.BuildingService
 import dev.adamko.kafkatorio.server.web.resources.ResourcePatchService
+import dev.adamko.kafkatorio.server.web.surfaces.SurfaceService
 import dev.adamko.kafkatorio.server.web.websocket.WebmapWebsocketServer
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -21,6 +22,7 @@ suspend fun main(): Unit = coroutineScope {
   val wsServer = WebmapWebsocketServer()
   val resourcePatchService = ResourcePatchService(appProps)
   val buildingService = BuildingService(appProps)
+  val surfaceService = SurfaceService(appProps)
 
   launch {
     websocketBroadcaster(wsServer)
@@ -43,11 +45,16 @@ suspend fun main(): Unit = coroutineScope {
   }
 
   launch {
+    surfaceService.consume()
+  }
+
+  launch {
     startWebServer(
       appProps = appProps,
       wsServer = wsServer,
       resourcePatchService = resourcePatchService,
       buildingService = buildingService,
+      surfaceService = surfaceService,
     )
   }
 }

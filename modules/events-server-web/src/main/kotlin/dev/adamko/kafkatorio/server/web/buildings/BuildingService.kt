@@ -6,21 +6,10 @@ import dev.adamko.kafkatorio.schema.common.FactorioServerId
 import dev.adamko.kafkatorio.schema.common.MapBuilding
 import dev.adamko.kafkatorio.schema.common.MapEntityPosition
 import dev.adamko.kafkatorio.schema.common.SurfaceIndex
-import dev.adamko.kafkatorio.schema.packets.KafkatorioPacket
 import dev.adamko.kafkatorio.schema.packets.MapChunkEntityUpdate
-import dev.adamko.kafkatorio.server.web.config.jsonMapper
-import java.time.Duration
-import java.util.Properties
+import dev.adamko.kafkatorio.server.web.kafka.followTopic
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.floor
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.runInterruptible
-import kotlinx.coroutines.withContext
-import org.apache.kafka.clients.consumer.ConsumerConfig
-import org.apache.kafka.clients.consumer.KafkaConsumer
-import org.apache.kafka.common.TopicPartition
-import org.apache.kafka.common.serialization.StringDeserializer
 
 
 /**
@@ -45,41 +34,16 @@ class BuildingService(
 
 
   /** Read all building updates from the beginning of the topic, and keep following it. */
-  suspend fun consume(): Unit = withContext(Dispatchers.IO) {
-    val topic = MapChunkEntityUpdate::class.topicName
-
-    KafkaConsumer(consumerProperties(), StringDeserializer(), StringDeserializer()).use { consumer ->
-      val partitions = consumer.partitionsFor(topic).map { TopicPartition(it.topic(), it.partition()) }
-      consumer.assign(partitions)
-      consumer.seekToBeginning(partitions)
-      println("[BuildingService] consuming $topic, partitions: ${partitions.size}")
-
-      while (isActive) {
-        val records = runInterruptible { consumer.poll(Duration.ofSeconds(1)) }
-        for (record in records) {
-          runCatching { handleRecord(record.key(), record.value()) }
-            .onFailure { println("[BuildingService] failed to read record: $it") }
-        }
-      }
-    }
+  suspend fun consume(): Unit = followTopic(
+    appProps,
+    MapChunkEntityUpdate::class.topicName,
+    clientId = "kafkatorio.events-server-web.buildings",
+  ) { serverId, data ->
+    if (data is MapChunkEntityUpdate) handleUpdate(serverId, data)
   }
 
 
-  private fun consumerProperties() = Properties().apply {
-    putAll(appProps.kafkaStreamsConfig.filterKeys { it == ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG })
-    put(ConsumerConfig.ISOLATION_LEVEL_CONFIG, "read_committed")
-    put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false")
-    put(ConsumerConfig.CLIENT_ID_CONFIG, "kafkatorio.events-server-web.buildings")
-  }
-
-
-  private fun handleRecord(key: String?, value: String?) {
-    if (key == null || value == null) return
-
-    val serverId = jsonMapper.decodeFromString(FactorioServerId.serializer(), key)
-    val update = jsonMapper.decodeFromString(KafkatorioPacket.serializer(), value).data
-        as? MapChunkEntityUpdate ?: return
-
+  private fun handleUpdate(serverId: FactorioServerId, update: MapChunkEntityUpdate) {
     // ghosts are planned buildings, not built ones
     if (update.key.protoId.type.toString() in IGNORED_TYPES) return
 
@@ -105,6 +69,8 @@ class BuildingService(
           status = entity.status,
           health = entity.health,
           unitNumber = entity.unitNumber,
+          direction = entity.direction,
+          recipe = entity.recipe,
         )
       }
     }

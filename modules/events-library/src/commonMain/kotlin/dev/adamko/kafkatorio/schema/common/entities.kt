@@ -30,6 +30,10 @@ sealed interface FactorioEntityData {
     val lastUser: UInt? = null,
     val status: Status? = null,
     val unitNumber: UnitNumber? = null,
+    /** @see FactorioEntityUpdateElement.Standard.direction */
+    val direction: UByte? = null,
+    /** @see FactorioEntityUpdateElement.Standard.recipe */
+    val recipe: String? = null,
   ) : FactorioEntityData
 
 
@@ -273,6 +277,10 @@ sealed interface FactorioEntityUpdateElement {
     val isActive: Boolean = false,
     val isRotatable: Boolean = false,
     val lastUser: UInt? = null,
+    /** `defines.direction` - 0 (north) to 15, clockwise. Only set if the entity can be rotated. */
+    val direction: UByte? = null,
+    /** The name of the recipe that a crafting machine is set to (or last used, for furnaces) */
+    val recipe: String? = null,
   ) : FactorioEntityUpdateElement
 
 }

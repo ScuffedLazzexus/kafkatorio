@@ -14,4 +14,8 @@ data class MapBuilding(
   val status: FactorioEntityData.Status? = null,
   val health: Float? = null,
   val unitNumber: UnitNumber? = null,
+  /** `defines.direction` - 0 (north) to 15, clockwise */
+  val direction: UByte? = null,
+  /** The name of the recipe of a crafting machine */
+  val recipe: String? = null,
 )

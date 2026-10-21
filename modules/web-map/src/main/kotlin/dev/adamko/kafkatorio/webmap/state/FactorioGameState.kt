@@ -31,16 +31,12 @@ private fun FactorioGameState.handlePlayerUpdate(
 
   val updated = previous.update(update.tick, update.data)
 
-  if (previous.mapMarker != updated.mapMarker) {
-    if (previous.mapMarker != null) {
-      println("removing player icon ${previous.index}")
-      playerIconsLayer.removeLayer(previous.mapMarker)
-    }
-    if (updated.mapMarker != null) {
-      println("adding player icon ${updated.index}")
-      playerIconsLayer.addLayer(updated.mapMarker)
-    }
-  }
+  // only shown if the player is on the surface that the map shows
+  map.updatePlayerMarker(
+    previous = previous.mapMarker,
+    updated = updated.mapMarker,
+    surfaceIndex = updated.playerDetails.surfaceIndex?.toString()?.toInt(),
+  )
 
   val updatedPlayersState = players + (previous.index to updated)
   return copy(players = updatedPlayersState)

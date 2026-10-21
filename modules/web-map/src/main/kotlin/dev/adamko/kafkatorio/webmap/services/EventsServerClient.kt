@@ -2,6 +2,7 @@ package dev.adamko.kafkatorio.webmap.services
 
 import dev.adamko.kafkatorio.schema.common.FactorioServerId
 import dev.adamko.kafkatorio.schema.common.MapBuilding
+import dev.adamko.kafkatorio.schema.common.MapSurface
 import dev.adamko.kafkatorio.schema.common.ResourcePatch
 import dev.adamko.kafkatorio.webmap.config.jsonMapper
 import kotlinx.serialization.Serializable
@@ -27,6 +28,14 @@ object EventsServerClient :
     restClient
       .call<List<FactorioServerId>>(window.location.origin + "/kafkatorio/data/servers")
       .await()
+
+
+  /** Fetch the surfaces that have a map. */
+  suspend fun surfaces(serverId: FactorioServerId): List<MapSurface> {
+    val url = "${window.location.origin}/kafkatorio/data/servers/${serverId.id}/map/surfaces"
+    val json = window.fetch(url).await().text().await()
+    return jsonMapper.decodeFromString(ListSerializer(MapSurface.serializer()), json)
+  }
 
 
   /** Fetch the resource patches (ore fields, oil fields) on a surface. */
@@ -64,6 +73,22 @@ object EventsServerClient :
     if (!response.ok) return emptyMap()
     val json = response.text().await()
     return jsonMapper.decodeFromString(MapSerializer(String.serializer(), BuildingInfo.serializer()), json)
+  }
+
+
+  /** Fetch the display name of each recipe, by recipe name (exported like [buildingInfo]). */
+  suspend fun recipeNames(): Map<String, String> = displayNames("recipes.json")
+
+
+  /** Fetch the display name of each resource, by resource name (exported like [buildingInfo]). */
+  suspend fun resourceNames(): Map<String, String> = displayNames("resources.json")
+
+
+  private suspend fun displayNames(filename: String): Map<String, String> {
+    val response = window.fetch("${window.location.origin}/kafkatorio/icons/$filename").await()
+    if (!response.ok) return emptyMap()
+    val json = response.text().await()
+    return jsonMapper.decodeFromString(MapSerializer(String.serializer(), String.serializer()), json)
   }
 }
 
