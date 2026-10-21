@@ -43,3 +43,14 @@ inline fun Polyline<*>.getLatLngs2(): PolylinePathPoints? {
     else                           -> null
   }
 }
+
+
+/**
+ * The Leaflet module itself.
+ *
+ * KVision's [io.kvision.maps.Maps.L] only wraps some of Leaflet's functions (e.g. not
+ * `gridLayer` or `tooltip`).
+ */
+@JsModule("leaflet")
+@JsNonModule
+external val leaflet: dynamic

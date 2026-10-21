@@ -35,6 +35,9 @@ services:
       - "12081:80" # web map (also proxies /kafkatorio/ to events-server-web)
     networks:
       - kafkatorio-infra-nw
+#    volumes:
+#      # building icons - see building-icons/export_building_icons.py
+#      - "./icons:/usr/share/nginx/icons:ro"
 
 
   ## Process Kafkatorio events

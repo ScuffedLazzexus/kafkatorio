@@ -7,7 +7,10 @@ import dev.adamko.kafkatorio.schema.common.ServerMapTilePngFilename
 import dev.adamko.kafkatorio.schema.common.SurfaceIndex
 import dev.adamko.kafkatorio.processor.config.ApplicationProperties
 import dev.adamko.kafkatorio.server.web.config.jsonMapper
+import dev.adamko.kafkatorio.server.web.buildings.BuildingService
 import dev.adamko.kafkatorio.server.web.resources.ResourcePatchService
+import dev.adamko.kafkatorio.schema.common.MapBuilding
+import dev.adamko.kafkatorio.schema.common.MapEntityPosition
 import dev.adamko.kafkatorio.schema.common.ResourcePatch
 import kotlinx.serialization.builtins.ListSerializer
 import io.ktor.http.HttpStatusCode
@@ -31,6 +34,7 @@ import kotlinx.serialization.json.encodeToJsonElement
 internal fun Routing.factorioServersRoutes(
   appProps: ApplicationProperties,
   resourcePatchService: ResourcePatchService,
+  buildingService: BuildingService,
 ) {
 
   get<FactorioServers> {
@@ -46,6 +50,16 @@ internal fun Routing.factorioServersRoutes(
   get<FactorioServer.MapData.ResourcePatches> { request ->
     val patches = resourcePatchService.patches(request.mapData.server.factorioServerId, request.surfaceIndex)
     call.respond(jsonMapper.encodeToJsonElement(ListSerializer(ResourcePatch.serializer()), patches))
+  }
+
+  get<FactorioServer.MapData.Buildings> { request ->
+    val buildings = buildingService.buildings(
+      serverId = request.mapData.server.factorioServerId,
+      surfaceIndex = request.surfaceIndex,
+      leftTop = MapEntityPosition(request.left, request.top),
+      rightBottom = MapEntityPosition(request.right, request.bottom),
+    )
+    call.respond(jsonMapper.encodeToJsonElement(ListSerializer(MapBuilding.serializer()), buildings))
   }
 }
 
@@ -122,7 +136,11 @@ data class FactorioServer(
     data class Buildings(
       val mapData: MapData,
       val surfaceIndex: SurfaceIndex,
-      // a list of buildings... (Sealed interface, different types?)
+      // the area, as query parameters
+      val left: Double,
+      val top: Double,
+      val right: Double,
+      val bottom: Double,
     )
   }
 

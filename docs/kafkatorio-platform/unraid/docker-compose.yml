@@ -84,6 +84,9 @@ services:
     ports:
       - "12081:80"
     networks: [ kafkatorio-nw ]
+    volumes:
+      # building icons - see docs/kafkatorio-platform/building-icons/export_building_icons.py
+      - "${APPDATA}/icons:/usr/share/nginx/icons:ro"
 
   ## Kafka admin UI - LAN/DMZ only, don't proxy this publicly
   infra-kafka-ui:

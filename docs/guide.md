@@ -88,3 +88,16 @@ on `127.0.0.1`, and Kafka isn't exposed at all.
    WebSocket support is enabled.
 7. In Factorio, run `/kafkatorio prototypes` and then `/kafkatorio chunks 10` to send the existing
    map.
+8. Optional: building icons. The web map's 'Building icons' layer uses icons and building sizes
+   exported from a Factorio client that has the same mods as the server (they're not in this repo,
+   since they belong to Wube and the mod authors). With the game closed, run
+
+   ```terminal
+   factorio --dump-data
+   factorio --dump-prototype-locale
+   SteamAppId=427520 factorio --dump-icon-sprites  # SteamAppId stops Steam relaunching the game
+   python3 docs/kafkatorio-platform/building-icons/export_building_icons.py ~/.factorio/script-output ./icons
+   scp -r ./icons root@<unraid>:/mnt/user/appdata/kafkatorio-platform/
+   ```
+
+   Re-export them when the mods change.

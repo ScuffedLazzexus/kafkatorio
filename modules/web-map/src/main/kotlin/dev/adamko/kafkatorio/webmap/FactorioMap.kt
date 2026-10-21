@@ -72,6 +72,8 @@ class FactorioMap(
 
   private val resourcePatchesLayer: LayerGroup = LayerGroup()
 
+  private val buildingIconsLayer = BuildingIconsLayer(serverId, coroutineScope)
+
   init {
 
     val baseLayers: Control.LayersObject = jso {
@@ -83,6 +85,7 @@ class FactorioMap(
       set("Resource patches", resourcePatchesLayer)
       set("Resources", resourcesTileLayer)
       set("Buildings", buildingsTileLayer)
+      set("Building icons", buildingIconsLayer.layer)
     }
 
     val layersControl = Layers(
@@ -111,8 +114,14 @@ class FactorioMap(
       resourcesTileLayer.addTo(this)
       buildingsTileLayer.addTo(this)
 
+      buildingIconsLayer.layer.addTo(this)
       playerIconsLayer.addTo(this)
       resourcePatchesLayer.addTo(this)
+
+      val map = this
+      on("mousemove", { event ->
+        buildingIconsLayer.onMouseMove(map, event.asDynamic().latlng.unsafeCast<LatLng>())
+      })
     }
 
     coroutineScope.launch {
@@ -120,6 +129,13 @@ class FactorioMap(
         runCatching { refreshResourcePatches() }
           .onFailure { println("[FactorioMap] failed to refresh resource patches: $it") }
         delay(60.seconds)
+      }
+    }
+
+    coroutineScope.launch {
+      while (true) {
+        delay(60.seconds)
+        buildingIconsLayer.refresh()
       }
     }
 
@@ -240,12 +256,15 @@ private fun ResourcePatch.displayName(): String =
 
 /** e.g. `2.4M`, or `12 wells` for infinite resources */
 private fun ResourcePatch.displayAmount(): String =
-  if (isInfinite) "$tileCount wells" else formatAmount(totalAmount)
+  if (isInfinite) wells() else formatAmount(totalAmount)
+
+
+private fun ResourcePatch.wells(): String = if (tileCount == 1) "1 well" else "$tileCount wells"
 
 
 private fun ResourcePatch.tooltip(): String = buildString {
   append("${displayName()}: ")
-  append(if (isInfinite) "$tileCount wells" else "${formatAmount(totalAmount)} in $tileCount tiles")
+  append(if (isInfinite) wells() else "${formatAmount(totalAmount)} in $tileCount tiles")
   val width = (rightBottom.x - leftTop.x).toInt()
   val height = (rightBottom.y - leftTop.y).toInt()
   append(" (${width}x$height, centre [${centre.x.toInt()}, ${centre.y.toInt()}])")

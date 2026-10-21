@@ -1,6 +1,7 @@
 package dev.adamko.kafkatorio.server.web.rest
 
 import dev.adamko.kafkatorio.processor.config.ApplicationProperties
+import dev.adamko.kafkatorio.server.web.buildings.BuildingService
 import dev.adamko.kafkatorio.server.web.resources.ResourcePatchService
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
@@ -26,6 +27,7 @@ import io.ktor.server.routing.routing
 internal fun Application.webmapTileServer(
   appProps: ApplicationProperties,
   resourcePatchService: ResourcePatchService,
+  buildingService: BuildingService,
 ) {
 
   install(AutoHeadResponse)
@@ -55,6 +57,6 @@ internal fun Application.webmapTileServer(
   }
 
   routing {
-    factorioServersRoutes(appProps, resourcePatchService)
+    factorioServersRoutes(appProps, resourcePatchService, buildingService)
   }
 }
