@@ -3,6 +3,7 @@ package dev.adamko.kafkatorio.server.web
 
 import dev.adamko.kafkatorio.processor.config.ApplicationProperties
 import dev.adamko.kafkatorio.server.web.buildings.BuildingService
+import dev.adamko.kafkatorio.server.web.research.ResearchService
 import dev.adamko.kafkatorio.server.web.resources.ResourcePatchService
 import dev.adamko.kafkatorio.server.web.surfaces.SurfaceService
 import dev.adamko.kafkatorio.server.web.rest.webmapTileServer
@@ -19,6 +20,7 @@ internal suspend fun startWebServer(
   resourcePatchService: ResourcePatchService,
   buildingService: BuildingService,
   surfaceService: SurfaceService,
+  researchService: ResearchService,
 ): Unit = coroutineScope {
 
   embeddedServer(
@@ -28,7 +30,7 @@ internal suspend fun startWebServer(
 
     webmapWebsocketServer(wsServer)
 
-    webmapTileServer(appProps, resourcePatchService, buildingService, surfaceService)
+    webmapTileServer(appProps, resourcePatchService, buildingService, surfaceService, researchService)
 
   }.start(wait = true)
 }

@@ -11,6 +11,7 @@ import dev.adamko.kafkatorio.schema.packets.MapChunkResourceUpdate
 import dev.adamko.kafkatorio.schema.packets.MapChunkTileUpdate
 import dev.adamko.kafkatorio.schema.packets.PlayerUpdate
 import dev.adamko.kafkatorio.schema.packets.PrototypesUpdate
+import dev.adamko.kafkatorio.schema.packets.ResearchUpdate
 import dev.adamko.kafkatorio.schema.packets.SurfaceUpdate
 import kotlin.reflect.KClass
 
@@ -75,6 +76,7 @@ val KafkatorioPacketData.topicName: String
     is KafkatorioPacketDataError -> packetTopicNames.getValue(KafkatorioPacketDataError::class)
     is MapChunkEntityUpdate      -> packetTopicNames.getValue(MapChunkEntityUpdate::class)
     is MapChunkResourceUpdate    -> packetTopicNames.getValue(MapChunkResourceUpdate::class)
+    is ResearchUpdate            -> packetTopicNames.getValue(ResearchUpdate::class)
   }
 
 
@@ -90,9 +92,22 @@ private val packetTopicNames: Map<KClass<out KafkatorioPacketData>, String> = ma
   MapChunkEntityUpdate::class to "map-chunk-entity",
   MapChunkResourceUpdate::class to "map-chunk-resource",
   KafkatorioPacketDataError::class to "error",
+  ResearchUpdate::class to "research",
 ).mapValues { (_, v) ->
   "$DOMAIN.packet.$v"
 }
+
+
+/**
+ * Topics that are read from the beginning to rebuild in-memory views (e.g. the buildings on the
+ * web map), so their data must never be deleted.
+ */
+val retainedForeverTopics: Set<String>
+  get() = setOf(
+    MapChunkEntityUpdate::class.topicName,
+    MapChunkResourceUpdate::class.topicName,
+    ResearchUpdate::class.topicName,
+  )
 
 
 val KClass<out KafkatorioPacketData>.topicName: String

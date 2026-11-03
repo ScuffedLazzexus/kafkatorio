@@ -19,4 +19,8 @@ sealed interface SiteView {
   object SERVER : DynamicPath {
     override val path: String = "/servers/:serverId/"
   }
+
+  object RESEARCH : DynamicPath {
+    override val path: String = "/servers/:serverId/research"
+  }
 }

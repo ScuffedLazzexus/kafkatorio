@@ -21,6 +21,7 @@ export type KafkatorioPacketData =
   | KafkatorioPacketData.MapChunkTileUpdate
   | KafkatorioPacketData.PlayerUpdate
   | KafkatorioPacketData.PrototypesUpdate
+  | KafkatorioPacketData.ResearchUpdate
   | KafkatorioPacketData.SurfaceUpdate;
 
 export namespace KafkatorioPacketData {
@@ -29,6 +30,7 @@ export namespace KafkatorioPacketData {
     ConsoleChatUpdate = "kafkatorio.packet.instant.ConsoleChatUpdate",
     ConsoleCommandUpdate = "kafkatorio.packet.instant.ConsoleCommandUpdate",
     PrototypesUpdate = "kafkatorio.packet.instant.PrototypesUpdate",
+    ResearchUpdate = "kafkatorio.packet.instant.ResearchUpdate",
     SurfaceUpdate = "kafkatorio.packet.instant.SurfaceUpdate",
     EntityUpdate = "kafkatorio.packet.keyed.EntityUpdate",
     MapChunkEntityUpdate = "kafkatorio.packet.keyed.MapChunkEntityUpdate",
@@ -62,6 +64,17 @@ export namespace KafkatorioPacketData {
   export interface PrototypesUpdate {
     type: KafkatorioPacketData.Type.PrototypesUpdate;
     prototypes: FactorioPrototype[];
+  }
+  
+  export interface ResearchUpdate {
+    type: KafkatorioPacketData.Type.ResearchUpdate;
+    forceName: string;
+    researched: string[];
+    levels?: { [key: string]: number };
+    current?: string | null;
+    progress?: Double | null;
+    queue?: string[];
+    technologyPriceMultiplier?: Double;
   }
   
   export interface SurfaceUpdate {

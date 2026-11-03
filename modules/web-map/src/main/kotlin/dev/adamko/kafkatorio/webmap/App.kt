@@ -4,6 +4,7 @@ import dev.adamko.kafkatorio.schema.packets.EventServerPacket
 import dev.adamko.kafkatorio.webmap.layout.headerNav
 import dev.adamko.kafkatorio.webmap.layout.homePage
 import dev.adamko.kafkatorio.webmap.layout.servers.serverPage
+import dev.adamko.kafkatorio.webmap.research.researchPage
 import dev.adamko.kafkatorio.webmap.routing.SiteRouter
 import dev.adamko.kafkatorio.webmap.routing.SiteView
 import dev.adamko.kafkatorio.webmap.services.WebsocketService
@@ -82,14 +83,15 @@ object App : Application() {
       // Only re-render when the page itself changes. Re-rendering on every state update (e.g. each
       // player position update) re-attaches the Leaflet map to a new element, which blanks the map.
       val pageState = siteStateStore.sub { state ->
-        Triple(state.view, state.serverIds, state.factorioGameState?.map)
+        listOf(state.view, state.serverIds, state.factorioGameState?.map, state.serverId)
       }
       main().bind(pageState) { _ ->
         val state = siteStateStore.getState()
         div(className = "container-fluid") {
           when (state.view) {
             SiteView.HOME   -> homePage(state)
-            SiteView.SERVER -> serverPage(state)
+            SiteView.SERVER   -> serverPage(state)
+            SiteView.RESEARCH -> researchPage(state)
           }
         }
         SiteRouter.updatePageLinks()

@@ -79,3 +79,26 @@ data class SurfaceUpdate(
 
 
 /*  ***  ***  ***  ***  ***  ***  ***  ***  ***  ***  ***  ***  ***  ***  ***  ***  ***  ***  *** */
+
+
+/** The research state of a force: what's researched, and what's being researched. */
+@Serializable
+@SerialName("kafkatorio.packet.instant.ResearchUpdate")
+data class ResearchUpdate(
+  val forceName: String,
+  /** The names of all researched technologies */
+  val researched: LuaJsonList<String>,
+  /**
+   * The level of technologies that can be researched more than once (e.g. infinite mining
+   * productivity). The level is the next one to research.
+   */
+  val levels: Map<String, Int> = emptyMap(),
+  /** The technology that's being researched */
+  val current: String? = null,
+  /** Progress of [current], from 0 to 1 */
+  val progress: Double? = null,
+  /** The research queue, starting with [current] */
+  val queue: LuaJsonList<String> = LuaJsonList(emptyList()),
+  /** The map setting that multiplies the cost of all technologies */
+  val technologyPriceMultiplier: Double = 1.0,
+) : KafkatorioInstantPacketData()

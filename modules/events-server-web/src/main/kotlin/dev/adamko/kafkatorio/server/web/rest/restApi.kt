@@ -3,6 +3,7 @@ package dev.adamko.kafkatorio.server.web.rest
 import dev.adamko.kafkatorio.processor.config.ApplicationProperties
 import dev.adamko.kafkatorio.server.web.buildings.BuildingService
 import dev.adamko.kafkatorio.server.web.resources.ResourcePatchService
+import dev.adamko.kafkatorio.server.web.research.ResearchService
 import dev.adamko.kafkatorio.server.web.surfaces.SurfaceService
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
@@ -30,6 +31,7 @@ internal fun Application.webmapTileServer(
   resourcePatchService: ResourcePatchService,
   buildingService: BuildingService,
   surfaceService: SurfaceService,
+  researchService: ResearchService,
 ) {
 
   install(AutoHeadResponse)
@@ -59,6 +61,6 @@ internal fun Application.webmapTileServer(
   }
 
   routing {
-    factorioServersRoutes(appProps, resourcePatchService, buildingService, surfaceService)
+    factorioServersRoutes(appProps, resourcePatchService, buildingService, surfaceService, researchService)
   }
 }

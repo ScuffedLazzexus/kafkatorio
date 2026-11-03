@@ -10,6 +10,7 @@ import io.kvision.redux.RAction
 sealed interface SiteAction : RAction {
   object HomePage : SiteAction
   data class ServerPage(val serverId: FactorioServerId) : SiteAction
+  data class ResearchPage(val serverId: FactorioServerId) : SiteAction
 
 
   data class ServerIdsLoaded(val serverIds: List<FactorioServerId>) : SiteAction

@@ -18,18 +18,26 @@ data class SiteState(
   val serverIds: List<FactorioServerId>? = null,
 
   val factorioGameState: FactorioGameState? = null,
+
+  /** The server whose pages are shown (the map, or research) */
+  val serverId: FactorioServerId? = null,
 ) : CoroutineScope {
 
   override val coroutineContext: CoroutineContext =
     Dispatchers.Default + SupervisorJob(rootJob) + CoroutineName("SiteState")
 
   operator fun plus(action: SiteAction): SiteState = when (action) {
-    is SiteAction.HomePage          -> copy(view = SiteView.HOME)
+    is SiteAction.HomePage          -> copy(view = SiteView.HOME, serverId = null)
 
     is SiteAction.ServerPage        -> copy(
       view = SiteView.SERVER,
-      factorioGameState = FactorioGameState(action.serverId),
+      serverId = action.serverId,
+      // keep the map when coming back from another page of the same server
+      factorioGameState = factorioGameState?.takeIf { it.serverId == action.serverId }
+        ?: FactorioGameState(action.serverId),
     )
+
+    is SiteAction.ResearchPage      -> copy(view = SiteView.RESEARCH, serverId = action.serverId)
 
     is SiteAction.ServerIdsLoaded   -> copy(serverIds = action.serverIds)
 

@@ -11,6 +11,7 @@ import dev.adamko.kafkatorio.schema.packets.MapChunkResourceUpdate
 import dev.adamko.kafkatorio.schema.packets.MapChunkTileUpdate
 import dev.adamko.kafkatorio.schema.packets.PlayerUpdate
 import dev.adamko.kafkatorio.schema.packets.PrototypesUpdate
+import dev.adamko.kafkatorio.schema.packets.ResearchUpdate
 import dev.adamko.kafkatorio.schema.packets.SurfaceUpdate
 import dev.adamko.kafkatorio.webmap.App
 import dev.adamko.kafkatorio.webmap.state.SiteAction
@@ -98,6 +99,7 @@ object WebsocketService : CoroutineScope {
               is MapChunkResourceUpdate,
               is MapChunkTileUpdate,
               is PrototypesUpdate,
+              is ResearchUpdate,
               is SurfaceUpdate,
               is KafkatorioPacketDataError -> {
                 // to be continued...

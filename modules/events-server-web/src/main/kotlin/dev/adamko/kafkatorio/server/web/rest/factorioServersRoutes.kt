@@ -9,7 +9,9 @@ import dev.adamko.kafkatorio.processor.config.ApplicationProperties
 import dev.adamko.kafkatorio.server.web.config.jsonMapper
 import dev.adamko.kafkatorio.server.web.buildings.BuildingService
 import dev.adamko.kafkatorio.server.web.resources.ResourcePatchService
+import dev.adamko.kafkatorio.server.web.research.ResearchService
 import dev.adamko.kafkatorio.server.web.surfaces.SurfaceService
+import dev.adamko.kafkatorio.schema.packets.ResearchUpdate
 import dev.adamko.kafkatorio.schema.common.MapSurface
 import dev.adamko.kafkatorio.schema.common.MapBuilding
 import dev.adamko.kafkatorio.schema.common.MapEntityPosition
@@ -38,6 +40,7 @@ internal fun Routing.factorioServersRoutes(
   resourcePatchService: ResourcePatchService,
   buildingService: BuildingService,
   surfaceService: SurfaceService,
+  researchService: ResearchService,
 ) {
 
   get<FactorioServers> {
@@ -49,6 +52,15 @@ internal fun Routing.factorioServersRoutes(
   get<FactorioServer.MapData.Surfaces> { request ->
     val surfaces = surfaceService.surfaces(request.mapData.server.factorioServerId)
     call.respond(jsonMapper.encodeToJsonElement(ListSerializer(MapSurface.serializer()), surfaces))
+  }
+
+  get<FactorioServer.Research> { request ->
+    val research = researchService.research(request.server.factorioServerId)
+    if (research == null) {
+      call.respond(HttpStatusCode.NotFound)
+    } else {
+      call.respond(jsonMapper.encodeToJsonElement(ResearchUpdate.serializer(), research))
+    }
   }
 
   get<FactorioServer.MapData.Tile> { tile ->
@@ -157,6 +169,13 @@ data class FactorioServer(
       val bottom: Double,
     )
   }
+
+  /** The research state of the players' force */
+  @Serializable
+  @Resource("research")
+  data class Research(
+    val server: FactorioServer,
+  )
 
   @Serializable
   @Resource("players")

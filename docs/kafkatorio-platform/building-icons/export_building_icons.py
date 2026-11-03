@@ -6,8 +6,8 @@ The icons belong to Wube and the mod authors, so they're not in this repo. Inste
 from a Factorio client that has the same mods as the server:
 
     factorio --dump-data              # script-output/data-raw-dump.json
-    factorio --dump-prototype-locale  # script-output/entity-locale.json, recipe-locale.json
-    factorio --dump-icon-sprites      # script-output/entity/*.png, recipe/*.png
+    factorio --dump-prototype-locale  # script-output/*-locale.json
+    factorio --dump-icon-sprites      # script-output/entity/*.png, recipe/*.png, technology/*.png, ...
 
 (For a Steam install, set `SteamAppId=427520` so that Steam doesn't relaunch the game.)
 
@@ -23,6 +23,10 @@ The output contains
   - recipes.json: {"<recipe name>": "<display name>"}
   - resources.json: {"<resource name>": "<display name>"}
   - recipe/<recipe name>.png
+  - technologies.json: the technology tree, for the research page
+  - technology/<technology name>.png
+  - items.json: {"<item name>": "<display name>"}, for science packs and research triggers
+  - item/<item name>.png (science packs, and items in research triggers)
 """
 
 import json
@@ -30,6 +34,14 @@ import math
 import shutil
 import sys
 from pathlib import Path
+
+try:
+    from PIL import Image  # optional, to shrink the (large) technology icons
+except ImportError:
+    Image = None
+
+# technology icons are 256px, but the research page shows them much smaller
+TECHNOLOGY_ICON_SIZE = 128
 
 
 def footprint(selection_box) -> tuple[int, int]:
@@ -79,8 +91,95 @@ def main(script_output: Path, output_dir: Path):
     resources = {name: names.get(name, name) for name in data_raw.get("resource", {})}
     (output_dir / "resources.json").write_text(json.dumps(resources, indent=1, sort_keys=True))
 
-    print(f"exported {len(buildings)} buildings, {len(recipes)} recipes and {len(resources)} resources"
-          f" to {output_dir}")
+    technologies, items = export_technologies(script_output, data_raw, output_dir)
+
+    print(f"exported {len(buildings)} buildings, {len(recipes)} recipes, {len(resources)} resources,"
+          f" {len(technologies)} technologies and {len(items)} items to {output_dir}")
+
+
+def as_list(value) -> list:
+    """Factorio dumps empty lists as empty objects, `{}`"""
+    return value if isinstance(value, list) else []
+
+
+def copy_icon(source: Path, target: Path, max_size: int):
+    """Copy an icon, shrinking it to max_size if Pillow is installed."""
+    if Image is None:
+        shutil.copyfile(source, target)
+        return
+    with Image.open(source) as image:
+        if image.width > max_size:
+            image = image.resize((max_size, max_size * image.height // image.width), Image.LANCZOS)
+        image.save(target, optimize=True)
+
+
+def export_technologies(script_output: Path, data_raw: dict, output_dir: Path) -> tuple[dict, dict]:
+    """The technology tree, with the cost of each technology, and icons."""
+    tech_names = json.loads((script_output / "technology-locale.json").read_text()).get("names", {})
+    item_names = json.loads((script_output / "item-locale.json").read_text()).get("names", {})
+
+    (output_dir / "technology").mkdir(exist_ok=True)
+    (output_dir / "item").mkdir(exist_ok=True)
+
+    technologies = {}
+    # science packs, and items needed by research triggers
+    item_icons = set()
+
+    for name, tech in data_raw.get("technology", {}).items():
+        if tech.get("hidden"):
+            continue
+        unit = tech.get("unit")
+        max_level = tech.get("max_level")
+        technology = {
+            "name": tech_names.get(name, name),
+            "prerequisites": as_list(tech.get("prerequisites")),
+            "order": tech.get("order", ""),
+            "unlocks": [e["recipe"] for e in as_list(tech.get("effects")) if e.get("type") == "unlock-recipe"],
+        }
+        if unit:
+            ingredients = [list(i.values()) if isinstance(i, dict) else i for i in as_list(unit.get("ingredients"))]
+            technology["cost"] = {
+                "count": unit.get("count"),
+                # e.g. "2^(L-6)*1000", for technologies with levels
+                "countFormula": unit.get("count_formula"),
+                "time": unit.get("time"),
+                "ingredients": [[pack, amount] for pack, amount in ingredients],
+            }
+            if tech.get("ignore_tech_cost_multiplier"):
+                technology["cost"]["ignoreMultiplier"] = True
+            item_icons.update(pack for pack, _ in ingredients)
+        trigger = tech.get("research_trigger")
+        if trigger:
+            technology["trigger"] = trigger
+            if "item" in trigger:
+                item_icons.add(trigger["item"] if isinstance(trigger["item"], str) else trigger["item"]["name"])
+        if max_level is not None:
+            technology["maxLevel"] = max_level  # a number, or "infinite"
+        if tech.get("upgrade"):
+            technology["upgrade"] = True
+        # technologies with levels are split up (e.g. mining-productivity-1, -2, ...); the level of
+        # the first one is in its name
+        level = name.rsplit("-", 1)[-1]
+        if level.isdigit():
+            technology["level"] = int(level)
+        if tech.get("enabled") is False:
+            technology["disabled"] = True
+        technologies[name] = technology
+
+        icon = script_output / "technology" / f"{name}.png"
+        if icon.exists():
+            copy_icon(icon, output_dir / "technology" / icon.name, TECHNOLOGY_ICON_SIZE)
+
+    items = {}
+    for item in sorted(item_icons):
+        items[item] = item_names.get(item, item)
+        icon = script_output / "item" / f"{item}.png"
+        if icon.exists():
+            shutil.copyfile(icon, output_dir / "item" / icon.name)
+
+    (output_dir / "technologies.json").write_text(json.dumps(technologies, indent=1, sort_keys=True))
+    (output_dir / "items.json").write_text(json.dumps(items, indent=1, sort_keys=True))
+    return technologies, items
 
 
 if __name__ == "__main__":

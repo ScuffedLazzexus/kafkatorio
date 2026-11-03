@@ -1,6 +1,7 @@
 import {isEventType} from "./eventTypeCheck";
 import {Converters} from "./converters";
 import {handleSurfaceUpdate} from "./surfaceUpdates";
+import {handleResearchTick} from "./researchUpdates";
 import EventCacheService from "../emitting/EventDataCache";
 import MapChunkUpdate from "./handlers/MapChunkUpdateHandler";
 import EntityUpdates from "./handlers/EntityUpdateHandler";
@@ -17,6 +18,8 @@ script.on_event(defines.events.on_tick, (event: OnTickEvent) => {
       handleSurfaceUpdate(event, Converters.eventNameString(event.name), surface)
     }
   }
+
+  handleResearchTick(event)
 
   const kPacket: KafkatorioPacketData | null = KafkatorioPacketQueue.dequeue()
   if (kPacket != null) {
