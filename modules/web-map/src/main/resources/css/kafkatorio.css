@@ -1,3 +1,209 @@
+/* Site theme - dark, like Factorio's UI */
+:root {
+  --kt-bg: #1e1d1e;
+  --kt-panel: #2f2e2f;
+  --kt-panel-raised: #3a393a;
+  --kt-border: #4a494a;
+  --kt-text: #e8e6e3;
+  --kt-muted: #a09d99;
+  --kt-heading: #ffe6c0;
+  --kt-accent: #ff9f1b;
+  --kt-accent-hover: #ffb547;
+}
+
+body {
+  background: var(--kt-bg);
+  color: var(--kt-text);
+  font-family: "Titillium Web", system-ui, sans-serif;
+}
+
+a {
+  color: var(--kt-accent);
+}
+
+a:hover {
+  color: var(--kt-accent-hover);
+}
+
+header .navbar {
+  background: #141314 !important;
+  border-bottom: 2px solid var(--kt-accent);
+}
+
+header .navbar-brand,
+header .navbar-brand:hover {
+  color: var(--kt-heading);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+
+/* Home page */
+
+.home-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 32px 0 48px;
+}
+
+.home-hero {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 24px 0 32px;
+}
+
+.home-hero-logo {
+  width: 96px;
+  height: 96px;
+  border-radius: 18px;
+  flex-shrink: 0;
+}
+
+.home-hero h1 {
+  margin: 0;
+  color: var(--kt-heading);
+  font-weight: 700;
+  font-size: 2.6rem;
+}
+
+.home-hero-tagline {
+  margin: 0;
+  color: var(--kt-muted);
+  font-size: 1.2rem;
+}
+
+.home-section {
+  margin-top: 24px;
+}
+
+.home-section h2 {
+  color: var(--kt-heading);
+  font-size: 1.4rem;
+  font-weight: 600;
+  border-bottom: 1px solid var(--kt-border);
+  padding-bottom: 6px;
+  margin-bottom: 16px;
+}
+
+.home-muted {
+  color: var(--kt-muted);
+}
+
+.home-about p {
+  max-width: 70ch;
+}
+
+.server-cards {
+  display: grid;
+  gap: 20px;
+}
+
+.server-card {
+  display: flex;
+  background: var(--kt-panel);
+  border: 1px solid var(--kt-border);
+  border-radius: 8px;
+  overflow: hidden;
+  color: var(--kt-text);
+  text-decoration: none;
+  transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+
+.server-card:hover {
+  color: var(--kt-text);
+  border-color: var(--kt-accent);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+}
+
+.server-card-preview {
+  position: relative;
+  width: 360px;
+  aspect-ratio: 1 / 1;
+  flex-shrink: 0;
+  background: #111;
+  overflow: hidden;
+}
+
+.server-card-preview-layer {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+
+.server-card-preview-layer img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: pixelated;
+}
+
+.server-card-body {
+  display: flex;
+  flex-direction: column;
+  padding: 18px 22px;
+}
+
+.server-card-body h3 {
+  margin: 0 0 8px;
+  color: var(--kt-heading);
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.server-card-surfaces {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.surface-chip {
+  background: var(--kt-panel-raised);
+  border: 1px solid var(--kt-border);
+  border-radius: 12px;
+  padding: 1px 10px;
+  font-size: 0.85rem;
+}
+
+.server-card-action {
+  margin-top: auto;
+  color: var(--kt-accent);
+  font-weight: 600;
+}
+
+@media (max-width: 700px) {
+  .server-card {
+    flex-direction: column;
+  }
+
+  .server-card-preview {
+    width: 100%;
+  }
+  .home-page {
+    padding: 16px 0 32px;
+  }
+
+  .home-hero {
+    gap: 16px;
+  }
+
+  .home-hero-logo {
+    width: 64px;
+    height: 64px;
+  }
+
+  .home-hero h1 {
+    font-size: 2rem;
+  }
+}
+
+
+/* Map */
+
 .leaflet-tile {
   /* https://github.com/Leaflet/Leaflet/issues/3575 */
   /*width: 257px !important;*/
