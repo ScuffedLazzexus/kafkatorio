@@ -27,6 +27,8 @@ kafka-streams-config:
   # commit.interval.ms, or transactions time out, get fenced, and the work is redone.
   producer.transaction.timeout.ms: ${KAFKA_STREAMS_TRANSACTION_TIMEOUT_MS:-60000}
   processing.guarantee: exactly_once_v2
+  # all RocksDB state stores share one bounded amount of memory (ROCKSDB_TOTAL_MEMORY_MB, default 256)
+  rocksdb.config.setter: dev.adamko.kafkatorio.processor.core.BoundedMemoryRocksDBConfig
   auto.offset.reset: earliest
   default.key.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
   default.value.serde: org.apache.kafka.common.serialization.Serdes$StringSerde

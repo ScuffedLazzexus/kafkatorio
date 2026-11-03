@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM eclipse-temurin:11-jdk-jammy
+FROM eclipse-temurin:17-jdk-jammy
 ARG KAFKATORIO_VERSION
 
 
