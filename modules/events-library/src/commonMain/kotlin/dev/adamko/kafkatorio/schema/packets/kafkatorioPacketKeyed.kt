@@ -177,6 +177,7 @@ data class MapChunkEntityUpdate(
         lastUser = entity.lastUser,
         direction = entity.direction,
         recipe = entity.recipe,
+        beltToGroundType = entity.beltToGroundType,
       )
     }
 }

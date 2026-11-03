@@ -21,6 +21,9 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import org.w3c.dom.CanvasRenderingContext2D
+import org.w3c.dom.CanvasLineCap
+import org.w3c.dom.CanvasLineJoin
+import org.w3c.dom.ROUND
 import org.w3c.dom.HTMLCanvasElement
 import org.w3c.dom.Image
 
@@ -60,6 +63,9 @@ class BuildingIconsLayer(
   private var loadedRecipeNames: Map<String, String> = emptyMap()
 
   private val icons = mutableMapOf<String, Deferred<Image?>>()
+
+  /** The colour of each belt tier, by transport belt name. See [beltColour]. */
+  private val beltColours = mutableMapOf<String, String>()
 
   /** The surface that's shown. Nauvis is surface 1. */
   private var surfaceIndex: Int = 1
@@ -178,7 +184,9 @@ class BuildingIconsLayer(
 
     // load the icons before drawing, so the canvas is updated in one go
     val buildingIcons = buildings.associateWith { building ->
-      building.protoId.name.toString().takeIf { it in info }?.let { icon("entity", it) }
+      // belts are coloured like the transport belt of their tier, so use that icon
+      val iconName = if (building.isBelt()) building.transportBeltName() else building.protoId.name.toString()
+      iconName.takeIf { it in info }?.let { icon("entity", it) }
     }.mapValues { (_, icon) -> icon?.await() }
 
     // like Factorio's 'alt mode', show the recipe on crafting machines, if it's big enough to see
@@ -202,8 +210,16 @@ class BuildingIconsLayer(
         ctx.fillRect(centreX - w * scale / 2, centreY - h * scale / 2, w * scale, h * scale)
       }
 
-      val size = building.iconSize(info) * scale
       val icon = buildingIcons[building]
+
+      // belts are drawn like the in-game map, so the direction they're going is visible
+      if (building.isBelt()) {
+        val colour = icon?.let { beltColours.getOrPut(building.transportBeltName()) { beltColour(it) } }
+        ctx.drawBelt(building, info, centreX, centreY, scale, colour ?: DEFAULT_BELT_COLOUR)
+        return@forEach
+      }
+
+      val size = building.iconSize(info) * scale
       if (icon != null) {
         ctx.drawImage(icon, centreX - size / 2, centreY - size / 2, size, size)
       } else {
@@ -235,6 +251,41 @@ class BuildingIconsLayer(
       img.src = "/kafkatorio/icons/$type/$name.png"
       deferred
     }
+  }
+
+
+  /**
+   * The colour of a belt tier, e.g. yellow, red or blue: the average of the colourful pixels of
+   * its icon.
+   */
+  private fun beltColour(icon: Image): String {
+    val size = 16
+    val canvas = document.createElement("canvas") as HTMLCanvasElement
+    canvas.width = size
+    canvas.height = size
+    val ctx = canvas.getContext("2d") as CanvasRenderingContext2D
+    ctx.drawImage(icon, 0.0, 0.0, size.toDouble(), size.toDouble())
+    val pixels = runCatching { ctx.getImageData(0.0, 0.0, size.toDouble(), size.toDouble()).data }
+      .getOrNull() ?: return DEFAULT_BELT_COLOUR
+
+    var r = 0
+    var g = 0
+    var b = 0
+    var count = 0
+    for (i in 0 until size * size) {
+      val pr = pixels.asDynamic()[i * 4] as Int
+      val pg = pixels.asDynamic()[i * 4 + 1] as Int
+      val pb = pixels.asDynamic()[i * 4 + 2] as Int
+      val alpha = pixels.asDynamic()[i * 4 + 3] as Int
+      val saturation = maxOf(pr, pg, pb) - minOf(pr, pg, pb)
+      if (alpha > 200 && saturation > 60) {
+        r += pr
+        g += pg
+        b += pb
+        count++
+      }
+    }
+    return if (count == 0) DEFAULT_BELT_COLOUR else "rgb(${r / count}, ${g / count}, ${b / count})"
   }
 
 
@@ -274,6 +325,9 @@ class BuildingIconsLayer(
     /** The size of the [hoverIndex] cells, in Factorio tiles */
     private const val CELL_SIZE = 16.0
 
+    /** For belts without an icon */
+    private const val DEFAULT_BELT_COLOUR = "rgb(200, 170, 60)"
+
     private fun cellKey(x: Double, y: Double): String =
       "${floor(x / CELL_SIZE).toInt()},${floor(y / CELL_SIZE).toInt()}"
   }
@@ -299,6 +353,95 @@ private const val DIRECTION_EAST = 4
 private const val DIRECTION_WEST = 12
 
 
+private const val DIRECTION_COUNT = 16
+
+private val BELT_TYPES = setOf("transport-belt", "underground-belt", "splitter")
+
+private fun MapBuilding.isBelt(): Boolean = protoId.type.toString() in BELT_TYPES
+
+/**
+ * The transport belt of the same tier, e.g. `fast-splitter` -> `fast-transport-belt`.
+ * (This naming holds for the base game, Krastorio 2 and Space Exploration.)
+ */
+private fun MapBuilding.transportBeltName(): String =
+  protoId.name.toString()
+    .replace("underground-belt", "transport-belt")
+    .replace("splitter", "transport-belt")
+
+
+/**
+ * Draw a belt, underground belt or splitter: its footprint, with an arrow per lane in the
+ * direction the items go.
+ *
+ * Underground belt entrances are dark on the far side (where the items go underground), and exits
+ * on the near side.
+ */
+private fun CanvasRenderingContext2D.drawBelt(
+  building: MapBuilding,
+  info: Map<String, BuildingInfo>,
+  centreX: Double,
+  centreY: Double,
+  scale: Double,
+  colour: String,
+) {
+  // the size facing north - the canvas is rotated to match the building
+  val buildingInfo = info[building.protoId.name.toString()]
+  val w = (buildingInfo?.w ?: 1) * scale
+  val h = (buildingInfo?.h ?: 1) * scale
+
+  save()
+  translate(centreX, centreY)
+  rotate((building.direction?.toInt() ?: 0) * 2 * PI / DIRECTION_COUNT)
+
+  fillStyle = "rgba(30, 30, 30, 0.85)"
+  fillRect(-w / 2, -h / 2, w, h)
+
+  // at low zoom levels a belt is a few pixels, so just show the colour
+  if (scale < 8) {
+    fillStyle = colour
+    fillRect(-w / 2 + scale * 0.2, -h / 2 + scale * 0.2, w - scale * 0.4, h - scale * 0.4)
+    restore()
+    return
+  }
+
+  when (building.beltToGroundType) {
+    // items go underground at the far (north) side
+    "input" -> {
+      fillStyle = colour
+      fillRect(-w / 2, -h / 2, w, h * 0.3)
+    }
+    // ... and come out at the near (south) side
+    "output" -> {
+      fillStyle = colour
+      fillRect(-w / 2, h / 2 - h * 0.3, w, h * 0.3)
+    }
+  }
+
+  // a chevron per lane (a splitter has two)
+  strokeStyle = colour
+  lineWidth = scale * 0.15
+  lineCap = CanvasLineCap.ROUND
+  lineJoin = CanvasLineJoin.ROUND
+  val lanes = max(1, (w / scale).toInt())
+  for (lane in 0 until lanes) {
+    val laneX = -w / 2 + (lane + 0.5) * scale
+    beginPath()
+    moveTo(laneX - scale * 0.25, scale * 0.15)
+    lineTo(laneX, -scale * 0.12)
+    lineTo(laneX + scale * 0.25, scale * 0.15)
+    stroke()
+  }
+
+  // the splitter box, across the lanes
+  if (lanes > 1) {
+    fillStyle = colour
+    fillRect(-w / 2 + scale * 0.1, h / 2 - scale * 0.22, w - scale * 0.2, scale * 0.12)
+  }
+
+  restore()
+}
+
+
 private fun MapBuilding.tooltip(
   info: Map<String, BuildingInfo>,
   recipeNames: Map<String, String>,
@@ -306,6 +449,10 @@ private fun MapBuilding.tooltip(
   val name = protoId.name.toString()
   append("<b>${info[name]?.name ?: name}</b>")
   recipe?.let { append("<br>Recipe: ${recipeNames[it] ?: it}") }
+  when (beltToGroundType) {
+    "input" -> append("<br>Entrance")
+    "output" -> append("<br>Exit")
+  }
   status?.let { append("<br>${it.name.lowercase().replace('_', ' ').replaceFirstChar(Char::uppercase)}") }
   health?.let { append("<br>Health: ${it.toInt()}") }
   append("<br>[${floor(position.x).toInt()}, ${floor(position.y).toInt()}]")

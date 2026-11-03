@@ -140,6 +140,7 @@ export class EntityUpdatesHandler {
       status: Converters.entityStatus(entity.status),
       direction: entity.supports_direction ? entity.direction : undefined,
       recipe: EntityUpdatesHandler.recipeName(entity),
+      beltToGroundType: entity.type == "underground-belt" ? entity.belt_to_ground_type : undefined,
     }
 
     EventDataCache.throttle<KafkatorioPacketData.MapChunkEntityUpdate>(

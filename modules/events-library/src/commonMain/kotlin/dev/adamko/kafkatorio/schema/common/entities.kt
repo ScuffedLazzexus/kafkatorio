@@ -34,6 +34,8 @@ sealed interface FactorioEntityData {
     val direction: UByte? = null,
     /** @see FactorioEntityUpdateElement.Standard.recipe */
     val recipe: String? = null,
+    /** @see FactorioEntityUpdateElement.Standard.beltToGroundType */
+    val beltToGroundType: String? = null,
   ) : FactorioEntityData
 
 
@@ -281,6 +283,8 @@ sealed interface FactorioEntityUpdateElement {
     val direction: UByte? = null,
     /** The name of the recipe that a crafting machine is set to (or last used, for furnaces) */
     val recipe: String? = null,
+    /** Whether an underground belt is an entrance (`input`) or an exit (`output`) */
+    val beltToGroundType: String? = null,
   ) : FactorioEntityUpdateElement
 
 }

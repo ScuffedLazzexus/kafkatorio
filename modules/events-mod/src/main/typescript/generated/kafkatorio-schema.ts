@@ -308,6 +308,7 @@ export interface FactorioEntityUpdateElementStandard {
   lastUser?: UInt | null;
   direction?: UByte | null;
   recipe?: string | null;
+  beltToGroundType?: string | null;
 }
 
 export type MinedProduct =

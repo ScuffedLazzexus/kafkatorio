@@ -18,4 +18,6 @@ data class MapBuilding(
   val direction: UByte? = null,
   /** The name of the recipe of a crafting machine */
   val recipe: String? = null,
+  /** Whether an underground belt is an entrance (`input`) or an exit (`output`) */
+  val beltToGroundType: String? = null,
 )

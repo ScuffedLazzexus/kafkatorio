@@ -71,6 +71,7 @@ class BuildingService(
           unitNumber = entity.unitNumber,
           direction = entity.direction,
           recipe = entity.recipe,
+          beltToGroundType = entity.beltToGroundType,
         )
       }
     }
