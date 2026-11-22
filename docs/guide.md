@@ -88,9 +88,11 @@ on `127.0.0.1`, and Kafka isn't exposed at all.
    WebSocket support is enabled.
 7. In Factorio, run `/kafkatorio prototypes` and then `/kafkatorio chunks 10` to send the existing
    map.
-8. Optional: building icons. The web map's 'Building icons' layer uses icons and building sizes
-   exported from a Factorio client that has the same mods as the server (they're not in this repo,
-   since they belong to Wube and the mod authors). With the game closed, run
+8. Optional: icons and names. The web map's 'Building icons' layer, the research page and the
+   production page use icons, building sizes, the technology tree and in-game names, exported from
+   a Factorio client that has the same mods as the server (they're not in this repo, since they
+   belong to Wube and the mod authors). Without them, those pages show less, or nothing. With the
+   game closed, run
 
    ```terminal
    factorio --dump-data
@@ -100,4 +102,5 @@ on `127.0.0.1`, and Kafka isn't exposed at all.
    scp -r ./icons root@<unraid>:/mnt/user/appdata/kafkatorio-platform/
    ```
 
-   Re-export them when the mods change.
+   Re-export them when the mods change. If [Pillow](https://pypi.org/project/pillow/) is installed,
+   the (large) technology icons are shrunk.

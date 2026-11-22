@@ -37,6 +37,10 @@ object SiteRouter : CoroutineScope {
         log("routing.on HOME")
         homepageView()
       }
+      .on(SiteView.PRODUCTION) { match ->
+        val serverId = match.data["serverId"] as? String ?: error("invalid server id")
+        App.siteStateStore.dispatch(SiteAction.ProductionPage(FactorioServerId(serverId)))
+      }
       .on(SiteView.RESEARCH) { match ->
         val serverId = match.data["serverId"] as? String ?: error("invalid server id")
         App.siteStateStore.dispatch(SiteAction.ResearchPage(FactorioServerId(serverId)))

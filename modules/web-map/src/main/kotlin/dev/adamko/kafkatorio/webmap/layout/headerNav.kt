@@ -15,6 +15,9 @@ fun Container.headerNav(state: SiteState) {
       navLink("Map", "/servers/${serverId.id}", className = navClass(state.view == SiteView.SERVER)) {
         setAttribute("data-navigo", "true")
       }
+      navLink("Production", "/servers/${serverId.id}/production", className = navClass(state.view == SiteView.PRODUCTION)) {
+        setAttribute("data-navigo", "true")
+      }
       navLink("Research", "/servers/${serverId.id}/research", className = navClass(state.view == SiteView.RESEARCH)) {
         setAttribute("data-navigo", "true")
       }

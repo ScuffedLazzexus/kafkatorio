@@ -92,6 +92,22 @@ object EventsServerClient :
   suspend fun itemNames(): Map<String, String> = displayNames("items.json")
 
 
+  /** Fetch the display name of each fluid (exported like [buildingInfo]). */
+  suspend fun fluidNames(): Map<String, String> = displayNames("fluids.json")
+
+
+  /**
+   * Fetch what the players' force produced and consumed during a range of game time (see
+   * `ProductionRange` in events-server-web). If [surfaceIndex] is `null`, sum all surfaces.
+   */
+  suspend fun production(serverId: FactorioServerId, surfaceIndex: Int?, range: String): ProductionReport {
+    val surface = surfaceIndex?.let { "&surface=$it" } ?: ""
+    val url = "${window.location.origin}/kafkatorio/data/servers/${serverId.id}/production?range=$range$surface"
+    val json = window.fetch(url).await().text().await()
+    return lenientJson.decodeFromString(ProductionReport.serializer(), json)
+  }
+
+
   /** Fetch the research state of the players' force, or `null` if the mod hasn't sent it yet. */
   suspend fun research(serverId: FactorioServerId): ResearchUpdate? {
     val response = window.fetch("${window.location.origin}/kafkatorio/data/servers/${serverId.id}/research").await()
@@ -164,4 +180,29 @@ data class TechnologyCost(
   /** `[science pack, amount per unit]` */
   val ingredients: List<List<JsonPrimitive>> = emptyList(),
   val ignoreMultiplier: Boolean = false,
+)
+
+
+/** What was produced and consumed during a range of game time */
+@Serializable
+data class ProductionReport(
+  val range: String,
+  val bucketMinutes: Int,
+  /** The game tick of the latest statistics, or `null` if there are none */
+  val latestTick: Long? = null,
+  val entries: List<ProductionEntry> = emptyList(),
+)
+
+
+@Serializable
+data class ProductionEntry(
+  /** `item` or `fluid` */
+  val kind: String,
+  val name: String,
+  /** The total amount produced during the range */
+  val produced: Double,
+  val consumed: Double,
+  /** The amount produced in each bucket of [ProductionReport.bucketMinutes], oldest first */
+  val producedSeries: List<Double>,
+  val consumedSeries: List<Double>,
 )

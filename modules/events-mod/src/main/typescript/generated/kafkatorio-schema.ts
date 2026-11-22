@@ -20,6 +20,7 @@ export type KafkatorioPacketData =
   | KafkatorioPacketData.MapChunkResourceUpdate
   | KafkatorioPacketData.MapChunkTileUpdate
   | KafkatorioPacketData.PlayerUpdate
+  | KafkatorioPacketData.ProductionUpdate
   | KafkatorioPacketData.PrototypesUpdate
   | KafkatorioPacketData.ResearchUpdate
   | KafkatorioPacketData.SurfaceUpdate;
@@ -29,6 +30,7 @@ export namespace KafkatorioPacketData {
     ConfigurationUpdate = "kafkatorio.packet.instant.ConfigurationUpdate",
     ConsoleChatUpdate = "kafkatorio.packet.instant.ConsoleChatUpdate",
     ConsoleCommandUpdate = "kafkatorio.packet.instant.ConsoleCommandUpdate",
+    ProductionUpdate = "kafkatorio.packet.instant.ProductionUpdate",
     PrototypesUpdate = "kafkatorio.packet.instant.PrototypesUpdate",
     ResearchUpdate = "kafkatorio.packet.instant.ResearchUpdate",
     SurfaceUpdate = "kafkatorio.packet.instant.SurfaceUpdate",
@@ -59,6 +61,16 @@ export namespace KafkatorioPacketData {
     authorPlayerIndex: PlayerIndex | null;
     command: string;
     parameters: string;
+  }
+  
+  export interface ProductionUpdate {
+    type: KafkatorioPacketData.Type.ProductionUpdate;
+    forceName: string;
+    surfaceIndex: SurfaceIndex;
+    tick: Tick;
+    periodTicks: UInt;
+    items?: ProductionCounts;
+    fluids?: ProductionCounts;
   }
   
   export interface PrototypesUpdate {
@@ -163,6 +175,11 @@ export type UInt = uint32;
 export interface ConfigurationUpdateGameData {
   oldVersion?: string | null;
   newVersion?: string | null;
+}
+
+export interface ProductionCounts {
+  produced?: { [key: string]: number };
+  consumed?: { [key: string]: number };
 }
 
 export type Double = double;

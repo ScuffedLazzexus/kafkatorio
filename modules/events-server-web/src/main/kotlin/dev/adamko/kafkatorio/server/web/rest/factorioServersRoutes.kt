@@ -9,6 +9,9 @@ import dev.adamko.kafkatorio.processor.config.ApplicationProperties
 import dev.adamko.kafkatorio.server.web.config.jsonMapper
 import dev.adamko.kafkatorio.server.web.buildings.BuildingService
 import dev.adamko.kafkatorio.server.web.resources.ResourcePatchService
+import dev.adamko.kafkatorio.server.web.production.ProductionRange
+import dev.adamko.kafkatorio.server.web.production.ProductionReport
+import dev.adamko.kafkatorio.server.web.production.ProductionService
 import dev.adamko.kafkatorio.server.web.research.ResearchService
 import dev.adamko.kafkatorio.server.web.surfaces.SurfaceService
 import dev.adamko.kafkatorio.schema.packets.ResearchUpdate
@@ -41,6 +44,7 @@ internal fun Routing.factorioServersRoutes(
   buildingService: BuildingService,
   surfaceService: SurfaceService,
   researchService: ResearchService,
+  productionService: ProductionService,
 ) {
 
   get<FactorioServers> {
@@ -61,6 +65,16 @@ internal fun Routing.factorioServersRoutes(
     } else {
       call.respond(jsonMapper.encodeToJsonElement(ResearchUpdate.serializer(), research))
     }
+  }
+
+  get<FactorioServer.Production> { request ->
+    val range = ProductionRange.values().firstOrNull { it.name.equals(request.range, ignoreCase = true) }
+    if (range == null) {
+      call.respond(HttpStatusCode.BadRequest)
+      return@get
+    }
+    val report = productionService.production(request.server.factorioServerId, request.surface, range)
+    call.respond(jsonMapper.encodeToJsonElement(ProductionReport.serializer(), report))
   }
 
   get<FactorioServer.MapData.Tile> { tile ->
@@ -169,6 +183,18 @@ data class FactorioServer(
       val bottom: Double,
     )
   }
+
+  /**
+   * What the players' force produced and consumed. [surface] is a surface index, or `null` for
+   * all surfaces. [range] is a [ProductionRange].
+   */
+  @Serializable
+  @Resource("production")
+  data class Production(
+    val server: FactorioServer,
+    val surface: Int? = null,
+    val range: String = "ONE_HOUR",
+  )
 
   /** The research state of the players' force */
   @Serializable

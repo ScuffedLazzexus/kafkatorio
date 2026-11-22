@@ -39,6 +39,8 @@ data class SiteState(
 
     is SiteAction.ResearchPage      -> copy(view = SiteView.RESEARCH, serverId = action.serverId)
 
+    is SiteAction.ProductionPage    -> copy(view = SiteView.PRODUCTION, serverId = action.serverId)
+
     is SiteAction.ServerIdsLoaded   -> copy(serverIds = action.serverIds)
 
     is SiteAction.FactorioUpdate    -> copy(

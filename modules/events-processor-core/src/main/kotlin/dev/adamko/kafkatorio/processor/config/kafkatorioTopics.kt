@@ -10,6 +10,7 @@ import dev.adamko.kafkatorio.schema.packets.MapChunkEntityUpdate
 import dev.adamko.kafkatorio.schema.packets.MapChunkResourceUpdate
 import dev.adamko.kafkatorio.schema.packets.MapChunkTileUpdate
 import dev.adamko.kafkatorio.schema.packets.PlayerUpdate
+import dev.adamko.kafkatorio.schema.packets.ProductionUpdate
 import dev.adamko.kafkatorio.schema.packets.PrototypesUpdate
 import dev.adamko.kafkatorio.schema.packets.ResearchUpdate
 import dev.adamko.kafkatorio.schema.packets.SurfaceUpdate
@@ -77,6 +78,7 @@ val KafkatorioPacketData.topicName: String
     is MapChunkEntityUpdate      -> packetTopicNames.getValue(MapChunkEntityUpdate::class)
     is MapChunkResourceUpdate    -> packetTopicNames.getValue(MapChunkResourceUpdate::class)
     is ResearchUpdate            -> packetTopicNames.getValue(ResearchUpdate::class)
+    is ProductionUpdate          -> packetTopicNames.getValue(ProductionUpdate::class)
   }
 
 
@@ -93,6 +95,7 @@ private val packetTopicNames: Map<KClass<out KafkatorioPacketData>, String> = ma
   MapChunkResourceUpdate::class to "map-chunk-resource",
   KafkatorioPacketDataError::class to "error",
   ResearchUpdate::class to "research",
+  ProductionUpdate::class to "production",
 ).mapValues { (_, v) ->
   "$DOMAIN.packet.$v"
 }

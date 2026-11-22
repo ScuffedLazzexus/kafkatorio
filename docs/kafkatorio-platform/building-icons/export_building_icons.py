@@ -25,8 +25,10 @@ The output contains
   - recipe/<recipe name>.png
   - technologies.json: the technology tree, for the research page
   - technology/<technology name>.png
-  - items.json: {"<item name>": "<display name>"}, for science packs and research triggers
-  - item/<item name>.png (science packs, and items in research triggers)
+  - items.json: {"<item name>": "<display name>"}, for the research and production pages
+  - item/<item name>.png
+  - fluids.json: {"<fluid name>": "<display name>"}, for the production page
+  - fluid/<fluid name>.png
 """
 
 import json
@@ -91,10 +93,12 @@ def main(script_output: Path, output_dir: Path):
     resources = {name: names.get(name, name) for name in data_raw.get("resource", {})}
     (output_dir / "resources.json").write_text(json.dumps(resources, indent=1, sort_keys=True))
 
-    technologies, items = export_technologies(script_output, data_raw, output_dir)
+    technologies = export_technologies(script_output, data_raw, output_dir)
+    items = export_icons_and_names(script_output, output_dir, "item")
+    fluids = export_icons_and_names(script_output, output_dir, "fluid")
 
     print(f"exported {len(buildings)} buildings, {len(recipes)} recipes, {len(resources)} resources,"
-          f" {len(technologies)} technologies and {len(items)} items to {output_dir}")
+          f" {len(technologies)} technologies, {len(items)} items and {len(fluids)} fluids to {output_dir}")
 
 
 def as_list(value) -> list:
@@ -113,17 +117,13 @@ def copy_icon(source: Path, target: Path, max_size: int):
         image.save(target, optimize=True)
 
 
-def export_technologies(script_output: Path, data_raw: dict, output_dir: Path) -> tuple[dict, dict]:
+def export_technologies(script_output: Path, data_raw: dict, output_dir: Path) -> dict:
     """The technology tree, with the cost of each technology, and icons."""
     tech_names = json.loads((script_output / "technology-locale.json").read_text()).get("names", {})
-    item_names = json.loads((script_output / "item-locale.json").read_text()).get("names", {})
 
     (output_dir / "technology").mkdir(exist_ok=True)
-    (output_dir / "item").mkdir(exist_ok=True)
 
     technologies = {}
-    # science packs, and items needed by research triggers
-    item_icons = set()
 
     for name, tech in data_raw.get("technology", {}).items():
         if tech.get("hidden"):
@@ -147,12 +147,9 @@ def export_technologies(script_output: Path, data_raw: dict, output_dir: Path) -
             }
             if tech.get("ignore_tech_cost_multiplier"):
                 technology["cost"]["ignoreMultiplier"] = True
-            item_icons.update(pack for pack, _ in ingredients)
         trigger = tech.get("research_trigger")
         if trigger:
             technology["trigger"] = trigger
-            if "item" in trigger:
-                item_icons.add(trigger["item"] if isinstance(trigger["item"], str) else trigger["item"]["name"])
         if max_level is not None:
             technology["maxLevel"] = max_level  # a number, or "infinite"
         if tech.get("upgrade"):
@@ -170,16 +167,20 @@ def export_technologies(script_output: Path, data_raw: dict, output_dir: Path) -
         if icon.exists():
             copy_icon(icon, output_dir / "technology" / icon.name, TECHNOLOGY_ICON_SIZE)
 
-    items = {}
-    for item in sorted(item_icons):
-        items[item] = item_names.get(item, item)
-        icon = script_output / "item" / f"{item}.png"
-        if icon.exists():
-            shutil.copyfile(icon, output_dir / "item" / icon.name)
-
     (output_dir / "technologies.json").write_text(json.dumps(technologies, indent=1, sort_keys=True))
-    (output_dir / "items.json").write_text(json.dumps(items, indent=1, sort_keys=True))
-    return technologies, items
+    return technologies
+
+
+def export_icons_and_names(script_output: Path, output_dir: Path, kind: str) -> dict:
+    """All icons of a kind (e.g. item, fluid) with their display names, as <kind>s.json"""
+    names = json.loads((script_output / f"{kind}-locale.json").read_text()).get("names", {})
+    (output_dir / kind).mkdir(exist_ok=True)
+    exported = {}
+    for icon in sorted((script_output / kind).glob("*.png")):
+        exported[icon.stem] = names.get(icon.stem, icon.stem)
+        shutil.copyfile(icon, output_dir / kind / icon.name)
+    (output_dir / f"{kind}s.json").write_text(json.dumps(exported, indent=1, sort_keys=True))
+    return exported
 
 
 if __name__ == "__main__":

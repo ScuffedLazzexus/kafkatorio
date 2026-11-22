@@ -4,6 +4,7 @@ import dev.adamko.kafkatorio.library.LuaJsonList
 import dev.adamko.kafkatorio.schema.common.FactorioPrototype
 import dev.adamko.kafkatorio.schema.common.PlayerIndex
 import dev.adamko.kafkatorio.schema.common.SurfaceIndex
+import dev.adamko.kafkatorio.schema.common.Tick
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -102,3 +103,30 @@ data class ResearchUpdate(
   /** The map setting that multiplies the cost of all technologies */
   val technologyPriceMultiplier: Double = 1.0,
 ) : KafkatorioInstantPacketData()
+
+
+/**
+ * How much of each item and fluid a force produced and consumed on a surface, since the previous
+ * update (usually one minute).
+ */
+@Serializable
+@SerialName("kafkatorio.packet.instant.ProductionUpdate")
+data class ProductionUpdate(
+  val forceName: String,
+  val surfaceIndex: SurfaceIndex,
+  /** The game tick at the end of the period */
+  val tick: Tick,
+  /** The length of the period, in ticks */
+  val periodTicks: UInt,
+  val items: ProductionCounts = ProductionCounts(),
+  val fluids: ProductionCounts = ProductionCounts(),
+) : KafkatorioInstantPacketData() {
+
+  /** Amounts by item or fluid name. Names with no change are left out. */
+  @Serializable
+  @SerialName("kafkatorio.packet.instant.ProductionUpdate.ProductionCounts")
+  data class ProductionCounts(
+    val produced: Map<String, Double> = emptyMap(),
+    val consumed: Map<String, Double> = emptyMap(),
+  )
+}
