@@ -1,67 +1,76 @@
-[![Mod Portal](https://img.shields.io/badge/dynamic/json?label=Mod%20Portal&query=%24.releases%5B-1%3A%5D.version&url=https%3A%2F%2Fmods.factorio.com%2Fapi%2Fmods%2Fkafkatorio-events&style=flat-square&color=%23600401)](https://mods.factorio.com/mod/kafkatorio-events)
-[![Factorio Version](https://img.shields.io/badge/dynamic/json?label=Factorio%20Version&query=%24.releases%5B-1%3A%5D.info_json.factorio_version&url=https%3A%2F%2Fmods.factorio.com%2Fapi%2Fmods%2Fkafkatorio-events&style=flat-square&color=%23d7cdf6)](https://mods.factorio.com/mod/kafkatorio-events)
-
 # Kafkatorio
 
-[Kafkatorio](https://github.com/adamko-dev/kafkatorio) is a platform used for creating
-[Factorio](https://www.factorio.com/) mods that require communication with an external server.
+Kafkatorio streams what happens on a [Factorio](https://www.factorio.com/) server to
+[Apache Kafka](https://kafka.apache.org/), and turns it into a live website for the server:
 
-Development is ongoing.
+* **Map** – a live map of every surface, with terrain, resource patches (with their size or
+  number of wells), buildings (with their direction and recipe), belts, and players moving in real
+  time.
+* **Production** – what's produced and consumed per minute, and science packs used, over the
+  last 10 minutes up to the last 7 days, for all surfaces or one.
+* **Research** – what's researched, the current research and queue, and how many science packs are
+  left. Shown as a filterable list, or as a tree like the game's technology screen.
 
-At present Kafkatorio is used to create a [live-view web map](https://factorio.adamko.dev), that
-shows the current status of a Factorio server, and any connected players.
+It's built for Factorio 2.0, and works with large mod packs (it's used with Space Exploration and
+Krastorio 2).
 
-However, Kafkatorio can be used for more than this. It has the potential to export metrics, and
-allow for inter-server communication.
+This is a fork of [adamko-dev/kafkatorio](https://github.com/adamko-dev/kafkatorio), updated for
+Factorio 2.0, with the production and research pages and many fixes.
 
-Kafkatorio was created to explore the possibilities of using
-[Apache Kafka](https://kafka.apache.org/) to process updates from a Factorio server.
+## Running it yourself
 
-### Running
+You need a Factorio server running in Docker, and a machine to build the images on.
+**[The guide](./docs/guide.md)** covers building, configuring, connecting the Factorio server,
+and putting the website behind a reverse proxy, with a ready-made setup for Unraid.
 
-[Instructions for running a Kafkatorio instance are available in the docs](./docs/guide.md).
-
-### Overview
-
-This is a brief overview of how Kafkatorio gathers data, processes it, and uses it to create the
-live web-map.
-
-Kafkatorio receives updates from a Factorio server, processes them, and exposes them over a REST
-and WebSocket APIs.
-
-1. The Kafkatorio game mod, [`events-mod`](./modules/events-mod), collects event data, de-bouncing
-   and grouping events, and converts them to JSON packets
-2. `events-mod` prints the packets to the Factorio game server logs
-3. The Factorio logs are forwarded to a Kafka cluster, either using
-    * [syslog](https://docs.docker.com/config/containers/logging/syslog/) (using Docker logging
-      plugin)
-    * or [Kafka Pipe](./modules/infra-kafka-pipe) (a script that reads the server logs and forwards
-      them to a Kafka topic)
-4. The packets are consumed by [`events-server`](./modules/events-server), which processes the
-   packets using Kafka Streams, creating and hosting map tiles.
-
-   `events-server` serves the map tiles via a REST API, and produces WebSocket messages regarding
-   updates (for example, when a player's location has changed).
-5. The `web-map` uses Leaflet/JS to display the map, using the tiles and WebSocket messages from
-   `events-server`
+## How it works
 
 ```mermaid
-sequenceDiagram
+flowchart LR
+  factorio["Factorio server<br/>+ kafkatorio-events mod"]
+  syslog[events-server-syslog]
+  kafka[(Kafka)]
+  processors[events-processors]
+  web[events-server-web]
+  map["web-map<br/>(nginx)"]
+  browser([Browser])
 
-Factorio multiplayer server->>events-mod: in-game events
-Note over events-mod: converts events to packets
-events-mod->>logs processor: packets logged to console
-logs processor->>Kafka: publishes packets<br/>(Requires API key!)
-
-Kafka->>events-server: 
-
-Note over events-server: Packets are processed
-
-events-server->>web-map: Web map tiles (REST API)
-events-server-)web-map: WebSocket updates<br/>(e.g. player movement)
+  factorio -- "packets in the server log<br/>(Docker syslog log driver)" --> syslog
+  syslog -- "checks the server's token" --> kafka
+  kafka <--> processors
+  kafka --> web
+  web -- "REST + WebSocket" --> map
+  map --> browser
 ```
+
+1. The mod, [`events-mod`](./modules/events-mod) (written in TypeScript, compiled to Lua), listens
+   to in-game events, groups and de-bounces them, and prints them as JSON packets to the server
+   log.
+2. Docker's syslog log driver forwards the Factorio container's log to
+   [`events-server-syslog`](./modules/events-server-syslog). Each server's log is tagged with a
+   token (a JWT), so only known servers are accepted. The packets go to a Kafka topic.
+3. [`events-processors`](./modules/events-processors) uses Kafka Streams to turn the packets into
+   map tiles, buildings, resource patches, and so on.
+4. [`events-server-web`](./modules/events-server-web) serves the tiles and the other data over a
+   REST API, and pushes live updates (such as players moving) over a WebSocket.
+5. [`web-map`](./modules/web-map) is the website (Kotlin/JS, with Leaflet for the map). Its nginx
+   also forwards `/kafkatorio/` to `events-server-web`, so the whole site is on a single port.
+
+The packet format is defined once in [`events-library`](./modules/events-library) (Kotlin), which
+also generates the mod's TypeScript types.
+
+## Building
+
+```shell
+./gradlew build                 # build and test
+./gradlew :modules:events-mod:distZip
+                                # the mod: modules/events-mod/build/distributions/
+```
+
+See [the guide](./docs/guide.md#1-build-the-docker-images-and-the-mod) for building the Docker
+images.
 
 ## License
 
-Because I care about sharing improvements, Kafkatorio is licensed under the  
+Kafkatorio is licensed under the
 [**GNU General Public License v3.0**](https://choosealicense.com/licenses/gpl-3.0/).
