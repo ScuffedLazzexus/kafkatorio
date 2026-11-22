@@ -11,6 +11,12 @@ Kafkatorio streams what happens on a [Factorio](https://www.factorio.com/) serve
 * **Research** – what's researched, the current research and queue, and how many science packs are
   left. Shown as a filterable list, or as a tree like the game's technology screen.
 
+**[See it running](https://kafkatorio.greghub.dev/servers/kafkatorio/)** – a proof of concept,
+connected to a test server with Space Exploration and Krastorio 2:
+[map](https://kafkatorio.greghub.dev/servers/kafkatorio/),
+[production](https://kafkatorio.greghub.dev/servers/kafkatorio/production),
+[research tree](https://kafkatorio.greghub.dev/servers/kafkatorio/research/tree).
+
 It's built for Factorio 2.0, and works with large mod packs (it's used with Space Exploration and
 Krastorio 2).
 
