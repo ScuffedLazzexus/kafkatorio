@@ -19,6 +19,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.isActive
@@ -32,13 +33,8 @@ class SyslogSocketServer(
   appProps: ApplicationProperties,
 ) {
 
-  /** Incoming messages */
-  private val serverSocketTcp = aSocket(SelectorManager(Dispatchers.IO))
-    .tcp()
-    .bind(
-      appProps.socketServerHost,
-      appProps.socketServerPort,
-    )
+  private val host = appProps.socketServerHost
+  private val port = appProps.socketServerPort
 
 
   private val syslogParser: SyslogParser<Map<String, String>> =
@@ -53,12 +49,21 @@ class SyslogSocketServer(
       ).build()
 
 
+  /** Incoming messages */
   private val _messages: MutableSharedFlow<SyslogMsg> = MutableSharedFlow()
   val messages: SharedFlow<SyslogMsg>
     get() = _messages.asSharedFlow()
 
 
   suspend fun start(): Unit = withContext(Dispatchers.IO) {
+    // A SharedFlow drops messages that are emitted before anything collects them, so only accept
+    // connections once the Kafka producer is collecting. Otherwise, clients that (re)connect
+    // while this starts up lose their first messages.
+    _messages.subscriptionCount.first { it > 0 }
+
+    val serverSocketTcp = aSocket(SelectorManager(Dispatchers.IO))
+      .tcp()
+      .bind(host, port)
     log("started listening: ${serverSocketTcp.localAddress}")
 
     while (isActive) {
