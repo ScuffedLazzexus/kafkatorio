@@ -17,10 +17,10 @@ This guide sets up Kafkatorio for a Factorio server, from building it to a publi
 
 ## What you need
 
-* **A Factorio 2.0 server running in Docker**, for example
-  [factoriotools/factorio](https://hub.docker.com/r/factoriotools/factorio). Kafkatorio reads
-  the server's log through Docker's syslog log driver. The example setup can run the Factorio
-  server for you.
+* **A Factorio 2.0 server**. Kafkatorio reads what the server prints. In Docker (for example
+  [factoriotools/factorio](https://hub.docker.com/r/factoriotools/factorio)), Docker's syslog log
+  driver sends it; the example setup can run the Factorio server for you. Without Docker, a small
+  Python script does it ([see below](#factorio-server-without-docker)).
 * **A Docker host for Kafkatorio**, ideally the same one as the Factorio server. It needs about
   5 GB of memory while the existing map is sent (step 5), and much less after that. (The memory
   limits are the `-Xmx` options in `docker-compose.yml`.)
@@ -31,7 +31,7 @@ This guide sets up Kafkatorio for a Factorio server, from building it to a publi
 | Port         | Service                                     | Expose?                                    |
 |--------------|---------------------------------------------|--------------------------------------------|
 | `12081`      | the website (`web-map`)                     | yes, through a reverse proxy (step 7)      |
-| `12035`      | receives the Factorio server's log (syslog) | only to the Factorio server's Docker host  |
+| `12035`      | receives the Factorio server's log (syslog) | only to the Factorio server's host         |
 | `18090`      | Kafka UI, for debugging                     | no - Kafka has no authentication           |
 | `34197/udp`  | the Factorio game (if the example runs it)  | yes, for players                           |
 
@@ -170,6 +170,63 @@ about 30 seconds.
 
 To check it's working, `docker compose logs -f events-server-syslog` while someone plays. If the
 token wasn't signed with the `jwt-secret`, you'll see `Could not decode JWT` there.
+
+### Factorio server without Docker
+
+The mod prints its packets to the server's standard output (not to `factorio-current.log`).
+[`kafkatorio-forward.py`](./kafkatorio-platform/forwarder/kafkatorio-forward.py) runs the server,
+prints its output as usual, and sends the mod's packets to Kafkatorio. It needs Python 3.8 or
+newer, and nothing else.
+
+Copy it to the Factorio machine, put the token in a file only the server's user can read, and
+start the server through it:
+
+```shell
+echo '<KAFKATORIO_TOKEN>' > kafkatorio-token.txt
+chmod 600 kafkatorio-token.txt
+
+python3 kafkatorio-forward.py --host <kafkatorio host> --token-file kafkatorio-token.txt -- \
+  ./bin/x64/factorio --start-server my-save.zip --server-settings server-settings.json
+```
+
+* Everything after `--` is the server's usual command.
+* `--host` is Kafkatorio's Docker host (default `127.0.0.1`). If that's another machine, publish
+  port `12035` to it: in `docker-compose.yml`, change `127.0.0.1:12035:9002` to `12035:9002`, and
+  firewall it so only the Factorio machine can connect.
+* Ctrl+C (or SIGTERM) is passed to the server, so it saves and stops as usual.
+* If Kafkatorio can't be reached, the server keeps running. The packets are kept in memory (up to
+  100,000, see `--buffer`) and sent when it's back.
+* You can also pipe into it, `factorio --start-server ... | python3 kafkatorio-forward.py ...`,
+  but then stopping the script stops the server without saving. Prefer the first way.
+* `KAFKATORIO_TOKEN=<token>` in the environment works instead of `--token-file`. Don't put the
+  token on the command line, where other users can see it in `ps`.
+
+As a systemd service, for example `/etc/systemd/system/factorio.service`:
+
+```ini
+[Unit]
+Description=Factorio server, forwarding to Kafkatorio
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=factorio
+WorkingDirectory=/opt/factorio
+ExecStart=/usr/bin/python3 /opt/factorio/kafkatorio-forward.py \
+  --host <kafkatorio host> --token-file /opt/factorio/kafkatorio-token.txt -- \
+  /opt/factorio/bin/x64/factorio --start-server /opt/factorio/saves/my-save.zip \
+  --server-settings /opt/factorio/data/server-settings.json
+# stop the script, which passes the signal to the server once, so it saves
+KillMode=mixed
+TimeoutStopSec=60
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Messages like `can't connect to ... retrying` from `[kafkatorio-forward]` mean Kafkatorio isn't
+reachable yet; it keeps trying. It's tested on Linux.
 
 ## 5. Send the existing map
 

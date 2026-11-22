@@ -19,7 +19,8 @@ Factorio 2.0, with the production and research pages and many fixes.
 
 ## Running it yourself
 
-You need a Factorio server running in Docker, and a machine to build the images on.
+You need a Factorio server (in Docker, or not), a Docker host for Kafkatorio, and a machine to
+build the images on.
 **[The guide](./docs/guide.md)** covers building, configuring, connecting the Factorio server,
 and putting the website behind a reverse proxy, with a ready-made setup for Unraid.
 
@@ -35,7 +36,7 @@ flowchart LR
   map["web-map<br/>(nginx)"]
   browser([Browser])
 
-  factorio -- "packets in the server log<br/>(Docker syslog log driver)" --> syslog
+  factorio -- "packets in the server's output<br/>(Docker syslog log driver,<br/>or kafkatorio-forward.py)" --> syslog
   syslog -- "checks the server's token" --> kafka
   kafka <--> processors
   kafka --> web
@@ -46,8 +47,9 @@ flowchart LR
 1. The mod, [`events-mod`](./modules/events-mod) (written in TypeScript, compiled to Lua), listens
    to in-game events, groups and de-bounces them, and prints them as JSON packets to the server
    log.
-2. Docker's syslog log driver forwards the Factorio container's log to
-   [`events-server-syslog`](./modules/events-server-syslog). Each server's log is tagged with a
+2. Docker's syslog log driver (or, for a server outside Docker,
+   [`kafkatorio-forward.py`](./docs/kafkatorio-platform/forwarder/kafkatorio-forward.py)) forwards
+   the server's output to [`events-server-syslog`](./modules/events-server-syslog). Each server's log is tagged with a
    token (a JWT), so only known servers are accepted. The packets go to a Kafka topic.
 3. [`events-processors`](./modules/events-processors) uses Kafka Streams to turn the packets into
    map tiles, buildings, resource patches, and so on.
