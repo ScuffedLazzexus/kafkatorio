@@ -5,6 +5,7 @@ import dev.adamko.kafkatorio.webmap.layout.headerNav
 import dev.adamko.kafkatorio.webmap.layout.homePage
 import dev.adamko.kafkatorio.webmap.layout.servers.serverPage
 import dev.adamko.kafkatorio.webmap.production.productionPage
+import dev.adamko.kafkatorio.webmap.research.ResearchLayout
 import dev.adamko.kafkatorio.webmap.research.researchPage
 import dev.adamko.kafkatorio.webmap.routing.SiteRouter
 import dev.adamko.kafkatorio.webmap.routing.SiteView
@@ -92,7 +93,8 @@ object App : Application() {
           when (state.view) {
             SiteView.HOME   -> homePage(state)
             SiteView.SERVER   -> serverPage(state)
-            SiteView.RESEARCH -> researchPage(state)
+            SiteView.RESEARCH   -> researchPage(state, ResearchLayout.LIST)
+            SiteView.RESEARCH_TREE -> researchPage(state, ResearchLayout.TREE)
             SiteView.PRODUCTION -> productionPage(state)
           }
         }

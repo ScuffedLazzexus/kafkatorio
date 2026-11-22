@@ -2,6 +2,7 @@ package dev.adamko.kafkatorio.webmap.routing
 
 import dev.adamko.kafkatorio.schema.common.FactorioServerId
 import dev.adamko.kafkatorio.webmap.App
+import dev.adamko.kafkatorio.webmap.research.ResearchLayout
 import dev.adamko.kafkatorio.webmap.state.SiteAction
 import dev.adamko.kafkatorio.webmap.rootJob
 import dev.adamko.kafkatorio.webmap.services.EventsServerClient
@@ -41,9 +42,13 @@ object SiteRouter : CoroutineScope {
         val serverId = match.data["serverId"] as? String ?: error("invalid server id")
         App.siteStateStore.dispatch(SiteAction.ProductionPage(FactorioServerId(serverId)))
       }
+      .on(SiteView.RESEARCH_TREE) { match ->
+        val serverId = match.data["serverId"] as? String ?: error("invalid server id")
+        App.siteStateStore.dispatch(SiteAction.ResearchPage(FactorioServerId(serverId), ResearchLayout.TREE))
+      }
       .on(SiteView.RESEARCH) { match ->
         val serverId = match.data["serverId"] as? String ?: error("invalid server id")
-        App.siteStateStore.dispatch(SiteAction.ResearchPage(FactorioServerId(serverId)))
+        App.siteStateStore.dispatch(SiteAction.ResearchPage(FactorioServerId(serverId), ResearchLayout.LIST))
       }
       .on(SiteView.SERVER) { match ->
         println("routing.on SERVER ${JSON.stringify(match)}")

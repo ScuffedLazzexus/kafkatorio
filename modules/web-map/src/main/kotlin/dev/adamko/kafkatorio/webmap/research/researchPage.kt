@@ -14,31 +14,36 @@ import io.kvision.html.button
 import io.kvision.html.div
 import io.kvision.html.h1
 import io.kvision.html.h2
-import io.kvision.html.h3
 import io.kvision.html.image
+import io.kvision.html.link
 import io.kvision.html.p
 import io.kvision.html.span
-import kotlinx.browser.document
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.contentOrNull
-import kotlinx.serialization.json.intOrNull
-import kotlinx.serialization.json.jsonPrimitive
-import org.w3c.dom.events.KeyboardEvent
 
 
 private val researchPageScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
 
-/** The technology tree, and what's researched, with the science packs each technology needs. */
-fun Container.researchPage(state: SiteState) {
+/** How the technologies are shown on the research page */
+enum class ResearchLayout { LIST, TREE }
+
+
+/**
+ * The technology tree, and what's researched, with the science packs each technology needs.
+ *
+ * Shown either as a list of technologies that can be filtered, or as a tree with the
+ * prerequisites linked together, like in the game.
+ */
+fun Container.researchPage(state: SiteState, layout: ResearchLayout) {
   val serverId = state.serverId ?: return
-  val page = div(className = "research-page") {
-    p("Loading research…", className = "home-muted")
+  val page = div(className = "research-page research-page-${layout.name.lowercase()}") {
+    researchLayoutTabs(serverId, layout)
   }
+  val loading = page.p("Loading research…", className = "home-muted")
   researchPageScope.launch {
     val technologies = async {
       runCatching { EventsServerClient.technologies() }
@@ -50,22 +55,35 @@ fun Container.researchPage(state: SiteState) {
     val research = async { runCatching { EventsServerClient.research(serverId) }.getOrNull() }
 
     val model = ResearchModel(technologies.await(), research.await())
-    page.removeAll()
-    if (model.technologies.isEmpty()) {
-      page.p("The technology tree hasn't been exported yet - see docs/guide.md.", className = "home-muted")
-    } else {
-      ResearchView(page, serverId, model, Names(itemNames.await(), recipeNames.await())).render()
+    val names = Names(itemNames.await(), recipeNames.await())
+    page.remove(loading)
+    when {
+      model.technologies.isEmpty() ->
+        page.p("The technology tree hasn't been exported yet - see docs/guide.md.", className = "home-muted")
+
+      layout == ResearchLayout.LIST -> ResearchView(page, serverId, model, names).render()
+      layout == ResearchLayout.TREE -> ResearchTreeView(page, model, names).render()
     }
   }
 }
 
 
-private class Names(
-  val items: Map<String, String>,
-  val recipes: Map<String, String>,
-) {
-  fun item(name: String) = items[name] ?: name
-  fun recipe(name: String) = recipes[name] ?: name
+fun researchPath(serverId: FactorioServerId, layout: ResearchLayout): String = when (layout) {
+  ResearchLayout.LIST -> "/servers/${serverId.id}/research"
+  ResearchLayout.TREE -> "/servers/${serverId.id}/research/tree"
+}
+
+
+/** Links to switch between the list and the tree */
+private fun Container.researchLayoutTabs(serverId: FactorioServerId, current: ResearchLayout) {
+  div(className = "research-layout-tabs") {
+    listOf(ResearchLayout.LIST to "List", ResearchLayout.TREE to "Tree").forEach { (layout, label) ->
+      link(label, researchPath(serverId, layout), className = "research-filter-button") {
+        if (layout == current) addCssClass("active")
+        setAttribute("data-navigo", "true")
+      }
+    }
+  }
 }
 
 
@@ -86,7 +104,7 @@ private class ResearchView(
   private lateinit var packFilterButtons: Map<String, Div>
   private lateinit var statusButtons: Map<Set<TechnologyStatus>?, io.kvision.html.Button>
   private lateinit var resultCount: Div
-  private lateinit var detailOverlay: Div
+  private lateinit var detail: TechnologyDetail
 
 
   fun render() {
@@ -97,12 +115,8 @@ private class ResearchView(
     page.div(className = "research-grid") {
       sortedTechnologies().forEach { name -> cards[name] = technologyCard(name) }
     }
-    detailOverlay = page.div(className = "research-detail-overlay") {
-      visible = false
-      onClick { event -> if (event.target == getElement()) closeDetail() }
-    }
-    document.addEventListener("keydown", { event ->
-      if ((event as KeyboardEvent).key == "Escape") closeDetail()
+    detail = TechnologyDetail(page, model, names, treeLink = { name ->
+      "${researchPath(serverId, ResearchLayout.TREE)}?tech=$name"
     })
     applyFilters()
   }
@@ -264,7 +278,7 @@ private class ResearchView(
         div(className = "tech-card-cost") { costSummary(name, tech) }
         span(status.label, className = "tech-status")
       }
-      onClick { showDetail(name) }
+      onClick { detail.show(name) }
     }
   }
 
@@ -281,147 +295,12 @@ private class ResearchView(
   }
 
 
-  private fun Container.packIcon(pack: String, small: Boolean = false) {
-    image("/kafkatorio/icons/item/$pack.png", alt = names.item(pack), className = if (small) "pack-icon pack-icon-small" else "pack-icon") {
-      title = names.item(pack)
-    }
-  }
+  private fun Container.packIcon(pack: String, small: Boolean = false) = packIcon(pack, names, small)
 
 
   private fun Container.technologyLink(name: String) {
     span(model.technologies[name]?.displayName(name) ?: name, className = "tech-link") {
-      onClick { showDetail(name) }
+      onClick { detail.show(name) }
     }
   }
-
-
-  private fun closeDetail() {
-    detailOverlay.visible = false
-    detailOverlay.removeAll()
-  }
-
-
-  private fun showDetail(name: String) {
-    val tech = model.technologies[name] ?: return
-    val status = model.status[name] ?: TechnologyStatus.LOCKED
-    detailOverlay.removeAll()
-    detailOverlay.div(className = "research-detail tech-${status.name.lowercase()}") {
-      button("×", className = "research-detail-close") {
-        title = "Close"
-        onClick { closeDetail() }
-      }
-      div(className = "research-detail-title") {
-        image("/kafkatorio/icons/technology/$name.png", alt = "", className = "research-detail-icon")
-        div {
-          h3(tech.displayName(name))
-          span(status.label, className = "tech-status")
-          model.level(name)?.let { level ->
-            val max = tech.maxLevel?.jsonPrimitive?.let { it.intOrNull?.toString() ?: it.contentOrNull }
-            span(" Level $level${if (max == "infinite") " (infinite)" else ""}", className = "home-muted")
-          }
-        }
-      }
-
-      val units = model.units(name)
-      div(className = "research-detail-section") {
-        h3("Cost")
-        if (units == null) {
-          p(tech.triggerDescription(names))
-        } else {
-          val time = model.timePerUnit(name)
-          p("${formatAmount(units)} units${time?.let { ", ${formatAmount(it)}s each" } ?: ""}", className = "home-muted")
-          packList(model.cost(name))
-        }
-      }
-
-      if (status != TechnologyStatus.RESEARCHED) {
-        val (toReach, count) = model.costToReach(name)
-        if (count > 1) {
-          div(className = "research-detail-section") {
-            h3("Total to reach")
-            p("$count technologies, including the prerequisites that aren't researched yet", className = "home-muted")
-            packList(toReach)
-          }
-        }
-      }
-
-      technologyList("Requires", tech.prerequisites)
-      technologyList("Leads to", model.successors[name].orEmpty())
-
-      if (tech.unlocks.isNotEmpty()) {
-        div(className = "research-detail-section") {
-          h3("Unlocks")
-          div(className = "recipe-list") {
-            tech.unlocks.forEach { recipe ->
-              div(className = "recipe-item") {
-                image("/kafkatorio/icons/recipe/$recipe.png", alt = "", className = "pack-icon pack-icon-small")
-                span(names.recipe(recipe))
-              }
-            }
-          }
-        }
-      }
-    }
-    detailOverlay.visible = true
-  }
-
-
-  private fun Container.packList(cost: SciencePackCost) {
-    div(className = "pack-list") {
-      model.sciencePacks.filter { it in cost }.forEach { pack ->
-        div(className = "pack-total") {
-          title = names.item(pack)
-          packIcon(pack)
-          span(formatAmount(cost.getValue(pack)))
-        }
-      }
-    }
-  }
-
-
-  private fun Container.technologyList(title: String, technologies: List<String>) {
-    val known = technologies.filter { it in model.technologies }
-    if (known.isEmpty()) return
-    div(className = "research-detail-section") {
-      h3(title)
-      div(className = "tech-chip-list") {
-        known.sortedBy { model.depth[it] ?: 0 }.forEach { name ->
-          val status = model.status[name] ?: TechnologyStatus.LOCKED
-          div(className = "tech-chip tech-${status.name.lowercase()}") {
-            image("/kafkatorio/icons/technology/$name.png", alt = "", className = "pack-icon pack-icon-small")
-            span(model.technologies.getValue(name).displayName(name))
-            onClick { showDetail(name) }
-          }
-        }
-      }
-    }
-  }
-}
-
-
-/** The in-game name. Technologies with levels (e.g. `Mining productivity 3`) already include it. */
-private fun TechnologyInfo.displayName(id: String): String = name.ifBlank { id }
-
-
-/** e.g. `Craft 10 Iron plate`, for technologies researched by doing something */
-private fun TechnologyInfo.triggerDescription(names: Names): String {
-  val trigger = trigger ?: return "Unknown cost"
-  fun field(key: String) = trigger[key]?.jsonPrimitive?.contentOrNull
-  val type = field("type") ?: return "Unknown cost"
-  val count = field("count")?.let { "$it " } ?: ""
-  return when (type) {
-    "craft-item"   -> "Craft $count${names.item(field("item") ?: "?")}"
-    "mine-entity"  -> "Mine ${names.item(field("entity") ?: "?").replace('-', ' ')}"
-    "build-entity" -> "Build ${names.item(field("entity") ?: "?").replace('-', ' ')}"
-    else           -> type.replace('-', ' ').replaceFirstChar { it.uppercase() }
-  }
-}
-
-
-private fun formatAmount(amount: Double): String = when {
-  amount >= 1_000_000_000 -> "${(amount / 100_000_000).toLong() / 10.0}B"
-  amount >= 1_000_000     -> "${(amount / 100_000).toLong() / 10.0}M"
-  amount >= 10_000        -> "${(amount / 100).toLong() / 10.0}k"
-  amount == kotlin.math.floor(amount) -> amount.toLong().toString()
-  else                    -> "${(amount * 10).toLong() / 10.0}"
 }

@@ -2,6 +2,7 @@ package dev.adamko.kafkatorio.webmap.state
 
 import dev.adamko.kafkatorio.schema.common.FactorioServerId
 import dev.adamko.kafkatorio.schema.packets.EventServerPacket
+import dev.adamko.kafkatorio.webmap.research.ResearchLayout
 import dev.adamko.kafkatorio.webmap.rootJob
 import dev.adamko.kafkatorio.webmap.routing.SiteView
 import kotlin.coroutines.CoroutineContext
@@ -37,7 +38,10 @@ data class SiteState(
         ?: FactorioGameState(action.serverId),
     )
 
-    is SiteAction.ResearchPage      -> copy(view = SiteView.RESEARCH, serverId = action.serverId)
+    is SiteAction.ResearchPage      -> copy(
+      view = if (action.layout == ResearchLayout.TREE) SiteView.RESEARCH_TREE else SiteView.RESEARCH,
+      serverId = action.serverId,
+    )
 
     is SiteAction.ProductionPage    -> copy(view = SiteView.PRODUCTION, serverId = action.serverId)
 
